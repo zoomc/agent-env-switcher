@@ -41,6 +41,7 @@ export function DryRun() {
 
   const filteredResults = dryRunResults.filter((r) => r.profileId === selectedProfileId);
   const hasChanges = filteredResults.some((r) => r.changes.length > 0);
+  const hasReadyTargets = filteredResults.some((r) => r.status === 'ready');
 
   return (
     <div className="space-y-6">
@@ -181,14 +182,6 @@ export function DryRun() {
                     <Button variant="outline" size="sm" disabled>
                       Export Script
                     </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleApply}
-                      disabled={!hasChanges || isApplying || result.status === 'applied'}
-                    >
-                      {isApplying && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-                      {isApplying ? 'Applying...' : 'Apply Changes'}
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -208,6 +201,16 @@ export function DryRun() {
           </Card>
         )}
       </div>
+
+      {/* 统一的 Apply 按钮在底部 */}
+      {filteredResults.length > 0 && (
+        <div className="mt-6 flex justify-end">
+          <Button onClick={handleApply} disabled={!hasChanges || isApplying || !hasReadyTargets}>
+            {isApplying && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+            {isApplying ? 'Applying...' : 'Apply Changes'}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

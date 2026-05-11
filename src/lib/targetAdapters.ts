@@ -217,8 +217,29 @@ export async function generateDryRun(profile: Profile): Promise<DryRunResult[]> 
   const results: DryRunResult[] = [];
   for (const targetType of profile.enabledTargets) {
     const target = knownTargets.find((t) => t.type === targetType);
-    const currentContent = await targetAdapter.read(targetType);
-    const change = targetAdapter.diff(targetType, profile, currentContent);
+    let status: DryRunResult['status'] = 'pending';
+    let changes: DryRunChange[] = [];
+
+    try {
+      const currentContent = await targetAdapter.read(targetType);
+      const change = targetAdapter.diff(targetType, profile, currentContent);
+      if (change) {
+        changes = [change];
+        status = 'ready';
+      }
+    } catch (err) {
+      status = 'failed';
+      // 即使失败也记录一下提示
+      changes = [
+        {
+          file: TARGET_CONFIG_PATHS[targetType] || 'Unknown',
+          action: 'modify',
+          before: '',
+          after: `Error: ${err instanceof Error ? err.message : String(err)}`,
+        },
+      ];
+    }
+
     results.push({
       id: `dryrun-${profile.id}-${targetType}-${Date.now()}`,
       profileId: profile.id,
@@ -226,8 +247,8 @@ export async function generateDryRun(profile: Profile): Promise<DryRunResult[]> 
       targetType,
       targetName: target?.name || targetType,
       timestamp: new Date().toISOString(),
-      changes: change ? [change] : [],
-      status: change ? 'ready' : 'pending',
+      changes,
+      status,
     });
   }
   return results;
@@ -238,10 +259,12 @@ export async function applyProfile(profile: Profile): Promise<{
   errors: string[];
   warnings: string[];
   backupPaths: string[];
+  appliedTargets: TargetType[];
 }> {
   const errors: string[] = [];
   const warnings: string[] = [];
   const backupPaths: string[] = [];
+  const appliedTargets: TargetType[] = [];
   for (const targetType of profile.enabledTargets) {
     if (targetType === 'openai-compatible-api') {
       warnings.push(
@@ -257,14 +280,16 @@ export async function applyProfile(profile: Profile): Promise<{
       const backup = await targetAdapter.backup(targetType);
       if (backup) backupPaths.push(backup);
       await targetAdapter.write(targetType, profile);
+      appliedTargets.push(targetType);
     } catch (err) {
       errors.push(`${targetType}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
   return {
-    success: errors.length === 0,
+    success: errors.length === 0 && appliedTargets.length > 0,
     errors,
     warnings,
     backupPaths,
+    appliedTargets,
   };
 }

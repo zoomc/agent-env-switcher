@@ -304,6 +304,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setApplyWarnings([]);
     try {
       const result = await applyProfile(profile);
+      setApplyWarnings(result.warnings);
       if (result.success) {
         setProfiles((prev) =>
           prev.map((p) =>
@@ -313,17 +314,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
           )
         );
         setApplySuccess(true);
-        setApplyWarnings(result.warnings);
-        setDryRunResults((prev) =>
-          prev.map((r) => (r.profileId === profileId ? { ...r, status: 'applied' } : r))
-        );
-      } else {
+      } else if (result.errors.length > 0) {
         setApplyError(result.errors.join('; '));
-        setApplyWarnings(result.warnings);
-        setDryRunResults((prev) =>
-          prev.map((r) => (r.profileId === profileId ? { ...r, status: 'failed' } : r))
-        );
       }
+      // 更新每个 DryRunResult 的状态
+      setDryRunResults((prev) =>
+        prev.map((r) => {
+          if (r.profileId !== profileId) return r;
+          // 如果没有 changes，保持原样
+          if (r.status === 'pending') return r;
+          // 如果这个 target 被 applied
+          if (result.appliedTargets.includes(r.targetType)) {
+            return { ...r, status: 'applied' };
+          }
+          // 如果有 errors，并且这个 target 在 errors 里
+          const hasErrorForTarget = result.errors.some((e) => e.startsWith(`${r.targetType}:`));
+          if (hasErrorForTarget) {
+            return { ...r, status: 'failed' };
+          }
+          // 其他情况保持原样（比如 skipped 的）
+          return r;
+        })
+      );
     } catch (err) {
       setApplyError(err instanceof Error ? err.message : String(err));
     } finally {
