@@ -23,6 +23,7 @@ interface AppContextValue {
   isApplying: boolean;
   applyError: string | null;
   applySuccess: boolean;
+  applyWarnings: string[];
   switchProfile: (id: string) => void;
   addProfile: (profile: Omit<Profile, 'id' | 'isActive' | 'lastApplied' | 'healthStatus'>) => void;
   updateProfile: (id: string, updates: Partial<Profile>) => void;
@@ -57,6 +58,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isApplying, setIsApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
   const [applySuccess, setApplySuccess] = useState(false);
+  const [applyWarnings, setApplyWarnings] = useState<string[]>([]);
 
   const profilesRef = useRef(profiles);
   profilesRef.current = profiles;
@@ -299,6 +301,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsApplying(true);
     setApplyError(null);
     setApplySuccess(false);
+    setApplyWarnings([]);
     try {
       const result = await applyProfile(profile);
       if (result.success) {
@@ -310,11 +313,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           )
         );
         setApplySuccess(true);
+        setApplyWarnings(result.warnings);
         setDryRunResults((prev) =>
           prev.map((r) => (r.profileId === profileId ? { ...r, status: 'applied' } : r))
         );
       } else {
         setApplyError(result.errors.join('; '));
+        setApplyWarnings(result.warnings);
         setDryRunResults((prev) =>
           prev.map((r) => (r.profileId === profileId ? { ...r, status: 'failed' } : r))
         );
@@ -329,6 +334,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const clearApplyState = useCallback(() => {
     setApplyError(null);
     setApplySuccess(false);
+    setApplyWarnings([]);
   }, []);
 
   return (
@@ -344,6 +350,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         isApplying,
         applyError,
         applySuccess,
+        applyWarnings,
         switchProfile,
         addProfile,
         updateProfile,

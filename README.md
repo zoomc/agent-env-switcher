@@ -4,18 +4,24 @@ Local-first AI profile manager for macOS.
 
 ## Current Status
 
-| Phase   | Description                                            | Status     |
-| ------- | ------------------------------------------------------ | ---------- |
-| 1 / 1.1 | Tauri app skeleton + mock UI + profile CRUD            | ✅ Done    |
-| 2A      | localStorage persistence + data model cleanup          | ✅ Done    |
-| 2B      | Tauri FS integration (`~/.config/agent-env-switcher/`) | 🔲 Planned |
+| Phase   | Description                                            | Status         |
+| ------- | ------------------------------------------------------ | -------------- |
+| 1 / 1.1 | Tauri app skeleton + mock UI + profile CRUD            | ✅ Done        |
+| 2A      | localStorage persistence + data model cleanup          | ✅ Done        |
+| 2B      | Tauri FS integration (`~/.config/agent-env-switcher/`) | ✅ Done        |
+| 3       | Target adapters + dry-run + apply                      | ⏳ In Progress |
 
 **Important:**
 
-- This app **only manages its own profile data** — it does **not** modify Claude Code, Hermes, or OpenClaw configurations
-- Real target adapters (reading/writing tool config files) are **not yet implemented**
 - All API keys in the app are mock values (`MOCK_API_KEY_*_DO_NOT_USE`)
-- Data is persisted via **localStorage** only; Tauri FS integration is planned for Phase 2B
+- Data is persisted via **Tauri FS** and **localStorage** (fallback)
+- **Target adapters (reading/writing tool config files):**
+  - Claude Code (JSON): support, safe merge of existing config
+  - Hermes (YAML): dry run only (apply not supported yet)
+  - OpenClaw (JSON): support, safe merge of existing config
+  - OpenAI-compatible API: dry run only (no environment variable modification)
+- External configuration changes follow: backup → apply
+- **No automatic rollback implemented yet** (only backups before writes)
 
 ## Positioning
 

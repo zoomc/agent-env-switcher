@@ -6,7 +6,7 @@ import { appConfigDir, homeDir } from '@tauri-apps/api/path';
 export interface TargetAdapter {
   read(targetType: TargetType): Promise<string>;
   write(targetType: TargetType, profile: Profile): Promise<void>;
-  backup(targetType: TargetType): Promise<string>; // 返回备份路径
+  backup(targetType: TargetType): Promise<string>;
   diff(targetType: TargetType, profile: Profile, currentContent: string): DryRunChange | null;
 }
 
@@ -62,12 +62,73 @@ async function createBackup(targetType: TargetType, originalContent: string): Pr
   return backupPath;
 }
 
-function formatConfig(targetType: TargetType, profile: Profile): string {
-  switch (targetType) {
-    case 'claude-code':
-    case 'openclaw':
+function mergeJsonObject(
+  existing: Record<string, unknown>,
+  profileData: {
+    provider: string;
+    baseUrl: string;
+    apiKey: string;
+    models: {
+      default: string;
+      fast: string;
+      reasoning: string;
+    };
+  }
+): Record<string, unknown> {
+  return {
+    ...existing,
+    provider: profileData.provider,
+    baseUrl: profileData.baseUrl,
+    apiKey: profileData.apiKey,
+    models: {
+      ...(typeof existing.models === 'object' && existing.models !== null ? existing.models : {}),
+      default: profileData.models.default,
+      fast: profileData.models.fast,
+      reasoning: profileData.models.reasoning,
+    },
+  };
+}
+
+function formatConfigJson(
+  targetType: TargetType,
+  profile: Profile,
+  currentContent: string
+): string {
+  let existing: Record<string, unknown> = {};
+  if (currentContent.trim()) {
+    try {
+      existing = JSON.parse(currentContent);
+    } catch (e) {
+      throw new Error(
+        `${targetType} existing config is invalid JSON; cannot safely merge without overwriting`
+      );
+    }
+  }
+  const merged = mergeJsonObject(existing, {
+    provider: profile.providerType,
+    baseUrl: profile.baseUrl,
+    apiKey: profile.apiKey,
+    models: {
+      default: profile.defaultModel,
+      fast: profile.fastModel,
+      reasoning: profile.reasoningModel,
+    },
+  });
+  return JSON.stringify(merged, null, 2);
+}
+
+function formatConfigForDiff(
+  targetType: TargetType,
+  profile: Profile,
+  currentContent: string
+): string {
+  if (targetType === 'claude-code' || targetType === 'openclaw') {
+    try {
+      return formatConfigJson(targetType, profile, currentContent);
+    } catch {
+      const existing = currentContent.trim() ? JSON.parse(currentContent) : {};
       return JSON.stringify(
-        {
+        mergeJsonObject(existing, {
           provider: profile.providerType,
           baseUrl: profile.baseUrl,
           apiKey: profile.apiKey,
@@ -76,12 +137,14 @@ function formatConfig(targetType: TargetType, profile: Profile): string {
             fast: profile.fastModel,
             reasoning: profile.reasoningModel,
           },
-        },
+        }),
         null,
         2
       );
-    case 'hermes':
-      return `provider: ${profile.providerType}
+    }
+  }
+  if (targetType === 'hermes') {
+    return `provider: ${profile.providerType}
 baseUrl: ${profile.baseUrl}
 apiKey: ${profile.apiKey}
 models:
@@ -89,19 +152,19 @@ models:
   fast: ${profile.fastModel}
   reasoning: ${profile.reasoningModel}
 `;
-    case 'openai-compatible-api':
-      return JSON.stringify(
-        {
-          OPENAI_API_KEY: profile.apiKey,
-          OPENAI_API_BASE: profile.baseUrl,
-          OPENAI_DEFAULT_MODEL: profile.defaultModel,
-        },
-        null,
-        2
-      );
-    default:
-      return '';
   }
+  if (targetType === 'openai-compatible-api') {
+    return JSON.stringify(
+      {
+        OPENAI_API_KEY: profile.apiKey,
+        OPENAI_API_BASE: profile.baseUrl,
+        OPENAI_DEFAULT_MODEL: profile.defaultModel,
+      },
+      null,
+      2
+    );
+  }
+  return '';
 }
 
 function createDiff(
@@ -125,7 +188,14 @@ export const targetAdapter: TargetAdapter = {
   },
 
   async write(targetType: TargetType, profile: Profile): Promise<void> {
-    const content = formatConfig(targetType, profile);
+    if (targetType === 'hermes') {
+      throw new Error('Hermes apply is not supported yet');
+    }
+    if (targetType === 'openai-compatible-api') {
+      throw new Error('OpenAI-compatible API apply is not supported');
+    }
+    const currentContent = await this.read(targetType);
+    const content = formatConfigJson(targetType, profile, currentContent);
     await writeRawConfig(targetType, content);
   },
 
@@ -138,7 +208,7 @@ export const targetAdapter: TargetAdapter = {
   },
 
   diff(targetType: TargetType, profile: Profile, currentContent: string): DryRunChange | null {
-    const after = formatConfig(targetType, profile);
+    const after = formatConfigForDiff(targetType, profile, currentContent);
     return createDiff(targetType, currentContent, after);
   },
 };
@@ -166,11 +236,23 @@ export async function generateDryRun(profile: Profile): Promise<DryRunResult[]> 
 export async function applyProfile(profile: Profile): Promise<{
   success: boolean;
   errors: string[];
+  warnings: string[];
   backupPaths: string[];
 }> {
   const errors: string[] = [];
+  const warnings: string[] = [];
   const backupPaths: string[] = [];
   for (const targetType of profile.enabledTargets) {
+    if (targetType === 'openai-compatible-api') {
+      warnings.push(
+        'OpenAI-compatible API config changes skipped (environment variable modification not supported)'
+      );
+      continue;
+    }
+    if (targetType === 'hermes') {
+      warnings.push('Hermes config changes skipped (apply not supported yet)');
+      continue;
+    }
     try {
       const backup = await targetAdapter.backup(targetType);
       if (backup) backupPaths.push(backup);
@@ -182,6 +264,7 @@ export async function applyProfile(profile: Profile): Promise<{
   return {
     success: errors.length === 0,
     errors,
+    warnings,
     backupPaths,
   };
 }
