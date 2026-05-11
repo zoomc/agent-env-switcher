@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { redactSensitive } from '@/lib/mask';
 import { useApp } from '@/store/AppContext';
 import {
   Play,
@@ -29,14 +30,21 @@ export function DryRun() {
   const [selectedProfileId, setSelectedProfileId] = useState(
     profiles.find((p) => p.isActive)?.id ?? profiles[0]?.id ?? ''
   );
+  const [confirmApply, setConfirmApply] = useState(false);
 
   const handleGenerate = () => {
     clearApplyState();
+    setConfirmApply(false);
     generateDryRun(selectedProfileId);
   };
 
   const handleApply = () => {
+    if (!confirmApply) {
+      setConfirmApply(true);
+      return;
+    }
     applyChanges(selectedProfileId);
+    setConfirmApply(false);
   };
 
   const filteredResults = dryRunResults.filter((r) => r.profileId === selectedProfileId);
@@ -56,29 +64,37 @@ export function DryRun() {
           <CardDescription>Choose a profile to preview its configuration changes</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {profiles.map((profile) => (
-              <Button
-                key={profile.id}
-                variant={selectedProfileId === profile.id ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedProfileId(profile.id)}
-              >
-                {profile.name}
-                {profile.isActive && (
-                  <Badge variant="secondary" className="ml-2 text-xs">
-                    Active
-                  </Badge>
-                )}
-              </Button>
-            ))}
-          </div>
-          <div className="mt-4">
-            <Button size="sm" onClick={handleGenerate}>
-              <Play className="mr-1 h-4 w-4" />
-              Run Dry Run
-            </Button>
-          </div>
+          {profiles.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No profiles available. Create one in the Profiles page first.
+            </p>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2">
+                {profiles.map((profile) => (
+                  <Button
+                    key={profile.id}
+                    variant={selectedProfileId === profile.id ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedProfileId(profile.id)}
+                  >
+                    {profile.name}
+                    {profile.isActive && (
+                      <Badge variant="secondary" className="ml-2 text-xs">
+                        Active
+                      </Badge>
+                    )}
+                  </Button>
+                ))}
+              </div>
+              <div className="mt-4">
+                <Button size="sm" onClick={handleGenerate}>
+                  <Play className="mr-1 h-4 w-4" />
+                  Run Dry Run
+                </Button>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -114,7 +130,7 @@ export function DryRun() {
         <AlertTriangle className="h-4 w-4 text-amber-500" />
         <span className="text-xs text-amber-200">
           Dry Run only previews changes. Apply Changes will write selected supported targets after
-          backup.
+          backup. Sensitive values (API keys) are redacted in this preview.
         </span>
       </div>
 
@@ -133,7 +149,9 @@ export function DryRun() {
                       ? 'default'
                       : result.status === 'applied'
                         ? 'default'
-                        : 'destructive'
+                        : result.status === 'failed'
+                          ? 'destructive'
+                          : 'secondary'
                   }
                 >
                   {result.status}
@@ -145,34 +163,44 @@ export function DryRun() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {result.changes.map((change, idx) => (
-                  <div key={idx} className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-sm font-mono">{change.file}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {change.action}
-                      </Badge>
-                    </div>
-                    <div className="grid gap-2 md:grid-cols-2">
-                      <div className="rounded-md bg-red-500/10 border border-red-500/20 p-3">
-                        <p className="mb-1 text-xs font-medium text-red-400">Before</p>
-                        <pre className="text-xs font-mono text-red-300 whitespace-pre-wrap">
-                          {change.before || '(empty)'}
-                        </pre>
-                      </div>
-                      <div className="rounded-md bg-emerald-500/10 border border-emerald-500/20 p-3">
-                        <p className="mb-1 text-xs font-medium text-emerald-400">After</p>
-                        <pre className="text-xs font-mono text-emerald-300 whitespace-pre-wrap">
-                          {change.after}
-                        </pre>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-center">
-                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
+                {result.status === 'failed' && result.changes.length > 0 && (
+                  <div className="flex items-start gap-2 rounded-md border border-red-500/30 bg-red-500/10 p-3">
+                    <XCircle className="mt-0.5 h-4 w-4 text-red-500" />
+                    <span className="text-sm text-red-200">
+                      {result.changes[0].after || 'Failed to generate preview for this target'}
+                    </span>
                   </div>
-                ))}
+                )}
+                {result.changes.length > 0 &&
+                  result.status !== 'failed' &&
+                  result.changes.map((change, idx) => (
+                    <div key={idx} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-sm font-mono">{change.file}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {change.action}
+                        </Badge>
+                      </div>
+                      <div className="grid gap-2 md:grid-cols-2">
+                        <div className="rounded-md bg-red-500/10 border border-red-500/20 p-3">
+                          <p className="mb-1 text-xs font-medium text-red-400">Before</p>
+                          <pre className="text-xs font-mono text-red-300 whitespace-pre-wrap">
+                            {change.before ? redactSensitive(change.before) : '(empty)'}
+                          </pre>
+                        </div>
+                        <div className="rounded-md bg-emerald-500/10 border border-emerald-500/20 p-3">
+                          <p className="mb-1 text-xs font-medium text-emerald-400">After</p>
+                          <pre className="text-xs font-mono text-emerald-300 whitespace-pre-wrap">
+                            {redactSensitive(change.after)}
+                          </pre>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center">
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  ))}
                 <Separator />
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
@@ -189,26 +217,48 @@ export function DryRun() {
           </Card>
         ))}
 
-        {filteredResults.length === 0 && (
+        {filteredResults.length === 0 && profiles.length > 0 && (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Play className="mb-3 h-8 w-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">No dry-run results yet</p>
               <p className="text-xs text-muted-foreground">
-                Click "Run Dry Run" to preview configuration changes
+                Select a profile above and click &quot;Run Dry Run&quot; to preview changes
               </p>
             </CardContent>
           </Card>
         )}
       </div>
 
-      {/* 统一的 Apply 按钮在底部 */}
       {filteredResults.length > 0 && (
-        <div className="mt-6 flex justify-end">
-          <Button onClick={handleApply} disabled={!hasChanges || isApplying || !hasReadyTargets}>
-            {isApplying && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            {isApplying ? 'Applying...' : 'Apply Changes'}
-          </Button>
+        <div className="mt-6 space-y-3">
+          {confirmApply && (
+            <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
+              <p className="text-sm text-amber-200">
+                Apply changes for the selected profile? This will back up and overwrite config files
+                for supported targets.
+              </p>
+              <div className="mt-2 flex gap-2">
+                <Button size="sm" onClick={handleApply} disabled={isApplying}>
+                  {isApplying ? 'Applying...' : 'Confirm Apply'}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setConfirmApply(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+          {!confirmApply && (
+            <div className="flex justify-end">
+              <Button
+                onClick={() => setConfirmApply(true)}
+                disabled={!hasChanges || isApplying || !hasReadyTargets}
+              >
+                {isApplying && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+                {isApplying ? 'Applying...' : 'Apply Changes'}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

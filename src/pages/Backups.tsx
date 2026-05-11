@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { redactSensitive } from '@/lib/mask';
 import { useApp } from '@/store/AppContext';
 import type { BackupRecord, DryRunChange } from '@/types';
 import {
@@ -16,6 +17,7 @@ import {
   XCircle,
   AlertTriangle,
   HardDrive,
+  ShieldAlert,
 } from 'lucide-react';
 
 function formatFileSize(bytes: number): string {
@@ -25,8 +27,8 @@ function formatFileSize(bytes: number): string {
 }
 
 function DiffView({ diff }: { diff: DryRunChange }) {
-  const beforeLines = diff.before.split('\n');
-  const afterLines = diff.after.split('\n');
+  const beforeLines = redactSensitive(diff.before).split('\n');
+  const afterLines = redactSensitive(diff.after).split('\n');
   const maxLines = Math.max(beforeLines.length, afterLines.length);
 
   return (
@@ -83,6 +85,7 @@ function BackupCard({ backup }: { backup: BackupRecord }) {
     success: boolean;
     message: string;
   } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const canRestore = showPreview && previewDiff !== null;
 
@@ -130,6 +133,14 @@ function BackupCard({ backup }: { backup: BackupRecord }) {
     }
   };
 
+  const handleDeleteBackup = () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    deleteBackup(backup.id);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -171,7 +182,7 @@ function BackupCard({ backup }: { backup: BackupRecord }) {
               )}
               {showDetails ? 'Hide Details' : 'Show Details'}
             </Button>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               {backup.restoreSupported && (
                 <Button
                   variant="outline"
@@ -205,10 +216,21 @@ function BackupCard({ backup }: { backup: BackupRecord }) {
                   Restore
                 </Button>
               )}
-              <Button variant="destructive" size="sm" onClick={() => deleteBackup(backup.id)}>
-                <Trash2 className="mr-1 h-3 w-3" />
-                Delete
-              </Button>
+              {confirmDelete ? (
+                <div className="flex items-center gap-1">
+                  <Button variant="destructive" size="sm" onClick={handleDeleteBackup}>
+                    Confirm
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <Button variant="destructive" size="sm" onClick={handleDeleteBackup}>
+                  <Trash2 className="mr-1 h-3 w-3" />
+                  Delete
+                </Button>
+              )}
             </div>
           </div>
 
@@ -315,6 +337,14 @@ export function Backups() {
         <p className="text-muted-foreground">Configuration snapshots for restore and recovery</p>
       </div>
 
+      <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
+        <ShieldAlert className="h-4 w-4 text-amber-500" />
+        <span className="text-xs text-amber-200">
+          Backup files may contain secrets (API keys, tokens). Keep them private and do not share
+          them.
+        </span>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -351,7 +381,7 @@ export function Backups() {
             <Archive className="mb-3 h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">No backups yet</p>
             <p className="text-xs text-muted-foreground">
-              Backups are created when you apply profile changes
+              Backups are created automatically when you apply profile changes
             </p>
           </CardContent>
         </Card>

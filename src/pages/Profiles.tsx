@@ -23,6 +23,8 @@ import {
   Download,
   Upload,
   AlertCircle,
+  RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import type { HealthStatus, Profile, ProviderType, TargetType } from '@/types';
 
@@ -79,6 +81,7 @@ function ProfileForm({
   submitLabel: string;
 }) {
   const [form, setForm] = useState(initial);
+  const [showApiKey, setShowApiKey] = useState(false);
 
   const toggleTarget = (t: TargetType) => {
     setForm((f) => ({
@@ -149,9 +152,20 @@ function ProfileForm({
           />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground">API Key (mock)</label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs text-muted-foreground">API Key</label>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5"
+              onClick={() => setShowApiKey(!showApiKey)}
+            >
+              {showApiKey ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+            </Button>
+          </div>
           <input
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm font-mono"
+            type={showApiKey ? 'text' : 'password'}
             value={form.apiKey}
             onChange={(e) => setForm((f) => ({ ...f, apiKey: e.target.value }))}
           />
@@ -195,6 +209,7 @@ export function Profiles() {
     handleExport,
     handleImport,
     importValidation,
+    refreshHealth,
   } = useApp();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [revealedKeys, setRevealedKeys] = useState<Set<string>>(new Set());
@@ -209,6 +224,8 @@ export function Profiles() {
     hasApiKeys: boolean;
   } | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [confirmExport, setConfirmExport] = useState(false);
+  const [refreshingHealthId, setRefreshingHealthId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleExpand = (id: string) => {
@@ -241,6 +258,14 @@ export function Profiles() {
     setExpandedId(null);
   };
 
+  const handleRefreshHealth = async (id: string) => {
+    setRefreshingHealthId(id);
+    try {
+      await refreshHealth(id);
+    } catch {}
+    setRefreshingHealthId(null);
+  };
+
   const profileToFormData = (p: Profile): ProfileFormData => ({
     name: p.name,
     providerType: p.providerType,
@@ -253,6 +278,10 @@ export function Profiles() {
   });
 
   const onExport = () => {
+    if (!confirmExport) {
+      setConfirmExport(true);
+      return;
+    }
     const json = handleExport();
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -261,6 +290,7 @@ export function Profiles() {
     a.download = `agent-env-switcher-profiles-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    setConfirmExport(false);
   };
 
   const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -315,10 +345,22 @@ export function Profiles() {
           <p className="text-muted-foreground">Manage your AI provider configuration profiles</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={onExport}>
-            <Download className="mr-1 h-4 w-4" />
-            Export
-          </Button>
+          {confirmExport ? (
+            <>
+              <Button variant="outline" size="sm" onClick={onExport}>
+                <Download className="mr-1 h-4 w-4" />
+                Confirm Export
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setConfirmExport(false)}>
+                Cancel
+              </Button>
+            </>
+          ) : (
+            <Button variant="outline" size="sm" onClick={onExport}>
+              <Download className="mr-1 h-4 w-4" />
+              Export
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
             <Upload className="mr-1 h-4 w-4" />
             Import
@@ -337,11 +379,22 @@ export function Profiles() {
         </div>
       </div>
 
+      {confirmExport && (
+        <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <span className="text-sm text-amber-200">
+            Exported JSON may contain API keys. Keep it private.
+          </span>
+        </div>
+      )}
+
       {importStep === 'preview' && importPreview && (
         <Card className="border-blue-500/30">
           <CardHeader>
             <CardTitle className="text-base">Import Preview</CardTitle>
-            <CardDescription>Review the profiles before importing</CardDescription>
+            <CardDescription>
+              Importing will replace all current profiles with the data below.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm">
@@ -358,13 +411,10 @@ export function Profiles() {
               <div className="mt-3 flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-2">
                 <AlertCircle className="h-4 w-4 text-amber-500" />
                 <span className="text-xs text-amber-200">
-                  This import contains API keys. They will be stored in localStorage.
+                  This import contains API keys. They will be stored locally.
                 </span>
               </div>
             )}
-            <p className="mt-3 text-xs text-muted-foreground">
-              Importing will replace all current profiles.
-            </p>
             <div className="mt-3 flex gap-2">
               <Button size="sm" onClick={confirmImport}>
                 Confirm Import
@@ -413,6 +463,22 @@ export function Profiles() {
               onCancel={() => setShowNewForm(false)}
               submitLabel="Create"
             />
+          </CardContent>
+        </Card>
+      )}
+
+      {profiles.length === 0 && !showNewForm && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Plus className="mb-3 h-8 w-8 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">No profiles yet</p>
+            <p className="text-xs text-muted-foreground">
+              Create a profile to start managing your AI configurations
+            </p>
+            <Button size="sm" className="mt-3" onClick={() => setShowNewForm(true)}>
+              <Plus className="mr-1 h-4 w-4" />
+              Create First Profile
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -510,13 +576,28 @@ export function Profiles() {
                           ))}
                         </div>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRefreshHealth(profile.id)}
+                          disabled={refreshingHealthId === profile.id}
+                        >
+                          {refreshingHealthId === profile.id ? (
+                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                          ) : (
+                            <RefreshCw className="mr-1 h-3 w-3" />
+                          )}
+                          Refresh Health
+                        </Button>
+                      </div>
                       {confirmDeleteId === profile.id ? (
                         <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
                           <p className="text-sm text-destructive">
                             Delete &quot;{profile.name}&quot;?
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            This action cannot be undone.
+                            This profile and its configuration will be permanently removed.
                           </p>
                           <div className="mt-2 flex gap-2">
                             <Button
