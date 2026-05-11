@@ -21,6 +21,22 @@
       "identifier": "fs:allow-exists",
       "allow": [{ "path": "$APPCONFIG/**" }]
     },
+    {
+      "identifier": "fs:allow-read",
+      "allow": [{ "path": "$HOME/**" }]
+    },
+    {
+      "identifier": "fs:allow-write",
+      "allow": [{ "path": "$HOME/**" }]
+    },
+    {
+      "identifier": "fs:allow-mkdir",
+      "allow": [{ "path": "$HOME/**" }]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [{ "path": "$HOME/**" }]
+    },
     "fs:allow-read",
     "fs:allow-write",
     "fs:allow-mkdir",

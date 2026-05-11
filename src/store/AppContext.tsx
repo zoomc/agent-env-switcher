@@ -8,9 +8,9 @@ import {
   type ReactNode,
 } from 'react';
 import type { Profile, BackupRecord, AppSettings, DryRunResult } from '@/types';
-import { generateDryRunPreview } from '@/data/mock';
 import * as tauriStorage from '@/lib/tauriStorage';
 import * as localStorage from '@/lib/storage';
+import { generateDryRun as generateRealDryRun, applyProfile } from '@/lib/targetAdapters';
 
 interface AppContextValue {
   profiles: Profile[];
@@ -20,13 +20,16 @@ interface AppContextValue {
   activeProfile: Profile | undefined;
   loadError: string | null;
   isLoading: boolean;
+  isApplying: boolean;
+  applyError: string | null;
+  applySuccess: boolean;
   switchProfile: (id: string) => void;
   addProfile: (profile: Omit<Profile, 'id' | 'isActive' | 'lastApplied' | 'healthStatus'>) => void;
   updateProfile: (id: string, updates: Partial<Profile>) => void;
   deleteProfile: (id: string) => void;
   duplicateProfile: (id: string) => void;
   updateSettings: (updates: Partial<AppSettings>) => void;
-  generateDryRun: (profileId: string) => void;
+  generateDryRun: (profileId: string) => Promise<void>;
   deleteBackup: (id: string) => void;
   handleExport: () => string;
   handleImport: (jsonString: string) => { success: boolean; error?: string };
@@ -37,6 +40,8 @@ interface AppContextValue {
     profileNames?: string[];
     hasApiKeys?: boolean;
   };
+  applyChanges: (profileId: string) => Promise<void>;
+  clearApplyState: () => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -49,6 +54,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(localStorage.loadSettings());
 
   const [dryRunResults, setDryRunResults] = useState<DryRunResult[]>([]);
+  const [isApplying, setIsApplying] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
+  const [applySuccess, setApplySuccess] = useState(false);
 
   const profilesRef = useRef(profiles);
   profilesRef.current = profiles;
@@ -246,11 +254,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  const generateDryRun = useCallback((profileId: string) => {
+  const generateDryRun = useCallback(async (profileId: string) => {
     const profile = profilesRef.current.find((p) => p.id === profileId);
     if (!profile) return;
-    const results = generateDryRunPreview(profile);
-    setDryRunResults(results);
+    try {
+      const results = await generateRealDryRun(profile);
+      setDryRunResults(results);
+    } catch {
+      setDryRunResults([]);
+    }
   }, []);
 
   const deleteBackup = useCallback((id: string) => {
@@ -281,6 +293,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const applyChanges = useCallback(async (profileId: string) => {
+    const profile = profilesRef.current.find((p) => p.id === profileId);
+    if (!profile) return;
+    setIsApplying(true);
+    setApplyError(null);
+    setApplySuccess(false);
+    try {
+      const result = await applyProfile(profile);
+      if (result.success) {
+        setProfiles((prev) =>
+          prev.map((p) =>
+            p.id === profileId
+              ? { ...p, lastApplied: new Date().toISOString(), healthStatus: 'healthy' }
+              : p
+          )
+        );
+        setApplySuccess(true);
+        setDryRunResults((prev) =>
+          prev.map((r) => (r.profileId === profileId ? { ...r, status: 'applied' } : r))
+        );
+      } else {
+        setApplyError(result.errors.join('; '));
+        setDryRunResults((prev) =>
+          prev.map((r) => (r.profileId === profileId ? { ...r, status: 'failed' } : r))
+        );
+      }
+    } catch (err) {
+      setApplyError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsApplying(false);
+    }
+  }, []);
+
+  const clearApplyState = useCallback(() => {
+    setApplyError(null);
+    setApplySuccess(false);
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -291,6 +341,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         activeProfile,
         loadError,
         isLoading,
+        isApplying,
+        applyError,
+        applySuccess,
         switchProfile,
         addProfile,
         updateProfile,
@@ -302,6 +355,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         handleExport,
         handleImport,
         importValidation,
+        applyChanges,
+        clearApplyState,
       }}
     >
       {children}
