@@ -14,15 +14,21 @@ Tasks:
 
 ## Phase 1: App Skeleton
 
-Status: pending
+Status: complete
 
 Tasks:
 
-- Scaffold Tauri + React + TypeScript project.
-- Add shadcn/ui baseline.
-- Add local storage boundary.
-- Add placeholder profile model.
-- Add non-mutating dry-run view.
+- [x] Scaffold Tauri + React + TypeScript project.
+- [x] Add shadcn/ui baseline.
+- [x] Add local storage boundary (types and mock data defined).
+- [x] Add placeholder profile model.
+- [x] Add non-mutating dry-run view.
+- [x] Add 6 navigable pages (Dashboard, Profiles, Targets, Dry Run, Backups, Settings).
+- [x] Add left sidebar navigation.
+- [x] Add dark mode support.
+- [x] Add API key masking (first 3 + dots + last 2).
+- [x] Add mock data for 5 profiles.
+- [x] Verify TypeScript compilation, Vite build, and Tauri cargo check.
 
 ## Phase 2: Foundation MVP
 

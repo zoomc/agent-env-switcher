@@ -6,6 +6,12 @@ dist/
 build/
 target/
 src-tauri/target/
+src-tauri/gen/
+tsconfig.tsbuildinfo
+tsconfig.node.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+vite.config.d.ts.map
 
 # Environment and secrets
 .env
