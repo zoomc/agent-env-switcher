@@ -9,19 +9,8 @@ import {
 } from 'react';
 import type { Profile, BackupRecord, AppSettings, DryRunResult } from '@/types';
 import { generateDryRunPreview } from '@/data/mock';
-import {
-  loadProfiles,
-  saveProfiles,
-  loadActiveProfileId,
-  saveActiveProfileId,
-  loadSettings,
-  saveSettings,
-  loadBackups,
-  saveBackups,
-  exportProfiles,
-  validateImport,
-  parseImport,
-} from '@/lib/storage';
+import * as tauriStorage from '@/lib/tauriStorage';
+import * as localStorage from '@/lib/storage';
 
 interface AppContextValue {
   profiles: Profile[];
@@ -30,6 +19,7 @@ interface AppContextValue {
   dryRunResults: DryRunResult[];
   activeProfile: Profile | undefined;
   loadError: string | null;
+  isLoading: boolean;
   switchProfile: (id: string) => void;
   addProfile: (profile: Omit<Profile, 'id' | 'isActive' | 'lastApplied' | 'healthStatus'>) => void;
   updateProfile: (id: string, updates: Partial<Profile>) => void;
@@ -53,37 +43,11 @@ const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [profiles, setProfiles] = useState<Profile[]>(() => {
-    try {
-      return loadProfiles();
-    } catch (e) {
-      setLoadError('Failed to load saved profiles, using defaults');
-      console.error(e);
-      return [];
-    }
-  });
-  const [backups, setBackups] = useState<BackupRecord[]>(() => {
-    try {
-      return loadBackups();
-    } catch (e) {
-      setLoadError((prev) =>
-        prev ? `${prev}; backups load failed` : 'Failed to load saved backups, using defaults'
-      );
-      console.error(e);
-      return [];
-    }
-  });
-  const [settings, setSettings] = useState<AppSettings>(() => {
-    try {
-      return loadSettings();
-    } catch (e) {
-      setLoadError((prev) =>
-        prev ? `${prev}; settings load failed` : 'Failed to load saved settings, using defaults'
-      );
-      console.error(e);
-      return loadSettings();
-    }
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [backups, setBackups] = useState<BackupRecord[]>([]);
+  const [settings, setSettings] = useState<AppSettings>(localStorage.loadSettings());
+
   const [dryRunResults, setDryRunResults] = useState<DryRunResult[]>([]);
 
   const profilesRef = useRef(profiles);
@@ -94,28 +58,124 @@ export function AppProvider({ children }: { children: ReactNode }) {
   settingsRef.current = settings;
 
   useEffect(() => {
-    const savedId = loadActiveProfileId();
-    if (savedId) {
-      const exists = profiles.some((p) => p.id === savedId);
-      if (exists) {
-        setProfiles((prev) => prev.map((p) => ({ ...p, isActive: p.id === savedId })));
+    let cancelled = false;
+    const errors: string[] = [];
+
+    async function loadAll() {
+      let loadedProfiles: Profile[] = [];
+      const rawProfiles = await tauriStorage.loadProfiles();
+      if (rawProfiles.data !== null) {
+        try {
+          const parsed = JSON.parse(rawProfiles.data) as Profile[];
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setProfiles(parsed);
+            loadedProfiles = parsed;
+          } else {
+            const ls = localStorage.loadProfiles();
+            setProfiles(ls);
+            loadedProfiles = ls;
+            errors.push('Tauri FS profiles empty, using localStorage');
+          }
+        } catch {
+          const ls = localStorage.loadProfiles();
+          setProfiles(ls);
+          loadedProfiles = ls;
+          errors.push('Tauri FS profiles parse failed, using localStorage');
+        }
+      } else {
+        const ls = localStorage.loadProfiles();
+        setProfiles(ls);
+        loadedProfiles = ls;
+        errors.push('No Tauri FS profiles found, using localStorage');
+      }
+
+      const rawSettings = await tauriStorage.loadSettings();
+      if (!cancelled) {
+        if (rawSettings.data !== null) {
+          try {
+            const parsed = JSON.parse(rawSettings.data) as AppSettings;
+            setSettings(parsed);
+          } catch {
+            const ls = localStorage.loadSettings();
+            setSettings(ls);
+            errors.push('Tauri FS settings parse failed, using localStorage');
+          }
+        } else {
+          const ls = localStorage.loadSettings();
+          setSettings(ls);
+        }
+      }
+
+      const rawBackups = await tauriStorage.loadBackups();
+      if (!cancelled) {
+        if (rawBackups.data !== null) {
+          try {
+            const parsed = JSON.parse(rawBackups.data) as BackupRecord[];
+            setBackups(parsed);
+          } catch {
+            const ls = localStorage.loadBackups();
+            setBackups(ls);
+            errors.push('Tauri FS backups parse failed, using localStorage');
+          }
+        } else {
+          const ls = localStorage.loadBackups();
+          setBackups(ls);
+        }
+      }
+
+      const savedId = await tauriStorage.loadActiveProfileId();
+      if (!cancelled && savedId) {
+        const exists = loadedProfiles.some((p) => p.id === savedId);
+        if (exists) {
+          setProfiles((prev) => prev.map((p) => ({ ...p, isActive: p.id === savedId })));
+        }
+      }
+
+      if (!cancelled) {
+        if (errors.length > 0) {
+          setLoadError(errors.join('; '));
+        }
+        setIsLoading(false);
       }
     }
+
+    loadAll().catch(() => {
+      if (!cancelled) {
+        setProfiles(localStorage.loadProfiles());
+        setSettings(localStorage.loadSettings());
+        setBackups(localStorage.loadBackups());
+        setLoadError('Failed to load from Tauri FS, using defaults');
+        setIsLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const activeProfile = profiles.find((p) => p.isActive);
 
   useEffect(() => {
-    saveProfiles(profiles);
-  }, [profiles]);
+    if (!isLoading && profiles.length > 0) {
+      tauriStorage.saveProfiles(JSON.stringify(profiles)).catch(() => {});
+      localStorage.saveProfiles(profiles);
+    }
+  }, [profiles, isLoading]);
 
   useEffect(() => {
-    saveSettings(settings);
-  }, [settings]);
+    if (!isLoading) {
+      tauriStorage.saveSettings(JSON.stringify(settings)).catch(() => {});
+      localStorage.saveSettings(settings);
+    }
+  }, [settings, isLoading]);
 
   useEffect(() => {
-    saveBackups(backups);
-  }, [backups]);
+    if (!isLoading && backups.length > 0) {
+      tauriStorage.saveBackups(JSON.stringify(backups)).catch(() => {});
+      localStorage.saveBackups(backups);
+    }
+  }, [backups, isLoading]);
 
   const switchProfile = useCallback((id: string) => {
     setProfiles((prev) =>
@@ -125,7 +185,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         lastApplied: p.id === id ? new Date().toISOString() : p.lastApplied,
       }))
     );
-    saveActiveProfileId(id);
+    tauriStorage.saveActiveProfileId(id).catch(() => {});
+    localStorage.saveActiveProfileId(id);
   }, []);
 
   const addProfile = useCallback(
@@ -153,11 +214,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (target?.isActive && prev.length > 1) {
         const remaining = prev.filter((p) => p.id !== id);
         const newActive = remaining[0];
-        saveActiveProfileId(newActive.id);
+        tauriStorage.saveActiveProfileId(newActive.id).catch(() => {});
+        localStorage.saveActiveProfileId(newActive.id);
         return remaining.map((p, i) => (i === 0 ? { ...p, isActive: true } : p));
       }
       if (target?.isActive) {
-        saveActiveProfileId(null);
+        tauriStorage.saveActiveProfileId(null).catch(() => {});
+        localStorage.saveActiveProfileId(null);
       }
       return prev.filter((p) => p.id !== id);
     });
@@ -195,24 +258,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const handleExport = useCallback(() => {
-    return exportProfiles(profilesRef.current);
+    return localStorage.exportProfiles(profilesRef.current);
   }, []);
 
   const importValidation = useCallback((jsonString: string) => {
-    return validateImport(jsonString);
+    return localStorage.validateImport(jsonString);
   }, []);
 
   const handleImport = useCallback((jsonString: string) => {
-    const validation = validateImport(jsonString);
+    const validation = localStorage.validateImport(jsonString);
     if (!validation.valid) {
       return { success: false, error: validation.error };
     }
     try {
-      const imported = parseImport(jsonString);
+      const imported = localStorage.parseImport(jsonString);
       setProfiles(imported);
-      saveActiveProfileId(null);
+      tauriStorage.saveActiveProfileId(null).catch(() => {});
+      localStorage.saveActiveProfileId(null);
       return { success: true };
-    } catch (e) {
+    } catch {
       return { success: false, error: 'Failed to parse import data' };
     }
   }, []);
@@ -226,6 +290,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         dryRunResults,
         activeProfile,
         loadError,
+        isLoading,
         switchProfile,
         addProfile,
         updateProfile,
