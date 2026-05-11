@@ -11,12 +11,7 @@ export type TargetType =
   | "claude-code"
   | "hermes"
   | "openclaw"
-  | "openai-compatible-api"
-  | "deepseek"
-  | "kimi"
-  | "openai"
-  | "gemini-compatible"
-  | "local-gateway";
+  | "openai-compatible-api";
 
 export type HealthStatus = "healthy" | "degraded" | "offline" | "unknown";
 
@@ -62,7 +57,7 @@ export interface DryRunChange {
   after: string;
 }
 
-export interface Backup {
+export interface BackupRecord {
   id: string;
   profileId: string;
   profileName: string;
@@ -79,4 +74,10 @@ export interface AppSettings {
   autoBackup: boolean;
   backupRetentionDays: number;
   advancedMode: boolean;
+}
+
+export interface ExportData {
+  version: 1;
+  exportedAt: string;
+  profiles: Profile[];
 }

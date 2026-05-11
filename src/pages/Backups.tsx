@@ -18,9 +18,7 @@ export function Backups() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Backups</h1>
-        <p className="text-muted-foreground">
-          Configuration snapshots for restore and recovery
-        </p>
+        <p className="text-muted-foreground">Configuration snapshots for restore and recovery</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -39,9 +37,7 @@ export function Backups() {
             <Download className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {backups.reduce((sum, b) => sum + b.fileCount, 0)}
-            </div>
+            <div className="text-2xl font-bold">{backups.reduce((sum, b) => sum + b.fileCount, 0)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -51,9 +47,7 @@ export function Backups() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {backups.length > 0
-                ? `${backups.reduce((sum, b) => sum + parseFloat(b.size), 0).toFixed(1)} KB`
-                : "0 KB"}
+              {backups.length > 0 ? `${backups.reduce((sum, b) => sum + parseFloat(b.size), 0).toFixed(1)} KB` : "0 KB"}
             </div>
           </CardContent>
         </Card>
@@ -64,9 +58,7 @@ export function Backups() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Archive className="mb-3 h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">No backups yet</p>
-            <p className="text-xs text-muted-foreground">
-              Backups are created when you apply profile changes
-            </p>
+            <p className="text-xs text-muted-foreground">Backups are created when you apply profile changes</p>
           </CardContent>
         </Card>
       ) : (
@@ -76,13 +68,9 @@ export function Backups() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">{backup.profileName}</CardTitle>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(backup.timestamp).toLocaleString()}
-                  </span>
+                  <span className="text-xs text-muted-foreground">{new Date(backup.timestamp).toLocaleString()}</span>
                 </div>
-                <CardDescription>
-                  {backup.fileCount} files · {backup.size}
-                </CardDescription>
+                <CardDescription>{backup.fileCount} files · {backup.size}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -98,15 +86,9 @@ export function Backups() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Backup ID: {backup.id}</span>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" disabled>
-                        <Download className="mr-1 h-3 w-3" />Export
-                      </Button>
-                      <Button variant="outline" size="sm" disabled>
-                        <RotateCcw className="mr-1 h-3 w-3" />Restore
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => deleteBackup(backup.id)}>
-                        <Trash2 className="mr-1 h-3 w-3" />Delete
-                      </Button>
+                      <Button variant="outline" size="sm" disabled><Download className="mr-1 h-3 w-3" />Export</Button>
+                      <Button variant="outline" size="sm" disabled><RotateCcw className="mr-1 h-3 w-3" />Restore</Button>
+                      <Button variant="destructive" size="sm" onClick={() => deleteBackup(backup.id)}><Trash2 className="mr-1 h-3 w-3" />Delete</Button>
                     </div>
                   </div>
                 </div>

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { maskApiKey } from "@/lib/mask";
 import { useApp } from "@/store/AppContext";
-import { mockTargets } from "@/data/mock";
+import { knownTargets } from "@/data/mock";
 import {
   Activity,
   ArrowRight,
@@ -22,6 +22,7 @@ import {
   Shield,
   Archive,
   UserCircle,
+  Info,
 } from "lucide-react";
 import type { HealthStatus } from "@/types";
 
@@ -40,9 +41,9 @@ const healthLabels: Record<HealthStatus, string> = {
 };
 
 export function Dashboard() {
-  const { profiles, backups, switchProfile, activeProfile } = useApp();
+  const { profiles, backups, switchProfile, activeProfile, loadError } = useApp();
   const navigate = useNavigate();
-  const availableTargets = mockTargets.filter((t) => t.isAvailable).length;
+  const availableTargets = knownTargets.filter((t) => t.isAvailable).length;
 
   return (
     <div className="space-y-6">
@@ -53,41 +54,41 @@ export function Dashboard() {
         </p>
       </div>
 
+      {loadError && (
+        <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <span className="text-xs text-amber-200">{loadError}</span>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 rounded-md border border-blue-500/30 bg-blue-500/10 p-3">
+        <Info className="h-4 w-4 text-blue-400" />
+        <span className="text-xs text-blue-200">
+          This app only manages its own profile data. It does not modify Claude Code, Hermes, or OpenClaw configurations.
+        </span>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Profile
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Active Profile</CardTitle>
             <UserCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">
-              {activeProfile?.name ?? "None"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {activeProfile?.providerType ?? "No profile active"}
-            </p>
+            <div className="text-xl font-bold">{activeProfile?.name ?? "None"}</div>
+            <p className="text-xs text-muted-foreground">{activeProfile?.providerType ?? "No profile active"}</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Available Targets
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Available Targets</CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">
-              {availableTargets}/{mockTargets.length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Targets ready for configuration
-            </p>
+            <div className="text-xl font-bold">{availableTargets}/{knownTargets.length}</div>
+            <p className="text-xs text-muted-foreground">Targets ready for configuration</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Backups</CardTitle>
@@ -95,9 +96,7 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold">{backups.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Configuration snapshots stored
-            </p>
+            <p className="text-xs text-muted-foreground">Configuration snapshots stored</p>
           </CardContent>
         </Card>
       </div>
@@ -107,24 +106,12 @@ export function Dashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">
-                  Current: {activeProfile.name}
-                </CardTitle>
-                <CardDescription>
-                  Active profile configuration overview
-                </CardDescription>
+                <CardTitle className="text-lg">Current: {activeProfile.name}</CardTitle>
+                <CardDescription>Active profile configuration overview</CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 {healthIcons[activeProfile.healthStatus]}
-                <Badge
-                  variant={
-                    activeProfile.healthStatus === "healthy"
-                      ? "default"
-                      : activeProfile.healthStatus === "degraded"
-                        ? "secondary"
-                        : "destructive"
-                  }
-                >
+                <Badge variant={activeProfile.healthStatus === "healthy" ? "default" : activeProfile.healthStatus === "degraded" ? "secondary" : "destructive"}>
                   {healthLabels[activeProfile.healthStatus]}
                 </Badge>
               </div>
@@ -145,9 +132,7 @@ export function Dashboard() {
                 <Separator />
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">API Key</span>
-                  <span className="text-sm font-medium font-mono">
-                    {maskApiKey(activeProfile.apiKey)}
-                  </span>
+                  <span className="text-sm font-medium font-mono">{maskApiKey(activeProfile.apiKey)}</span>
                 </div>
               </div>
               <div className="space-y-3">
@@ -192,29 +177,17 @@ export function Dashboard() {
         <CardContent>
           <div className="space-y-3">
             {profiles.map((profile) => (
-              <div
-                key={profile.id}
-                className="flex items-center justify-between rounded-md border border-border p-3"
-              >
+              <div key={profile.id} className="flex items-center justify-between rounded-md border border-border p-3">
                 <div className="flex items-center gap-3">
                   {healthIcons[profile.healthStatus]}
                   <span className="text-sm font-medium">{profile.name}</span>
-                  {profile.isActive && (
-                    <Badge variant="default" className="text-xs">Active</Badge>
-                  )}
+                  {profile.isActive && <Badge variant="default" className="text-xs">Active</Badge>}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">
-                    {healthLabels[profile.healthStatus]}
-                  </span>
+                  <span className="text-xs text-muted-foreground">{healthLabels[profile.healthStatus]}</span>
                   {!profile.isActive && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => switchProfile(profile.id)}
-                    >
-                      Switch
-                      <ArrowRight className="ml-1 h-3 w-3" />
+                    <Button variant="ghost" size="sm" onClick={() => switchProfile(profile.id)}>
+                      Switch <ArrowRight className="ml-1 h-3 w-3" />
                     </Button>
                   )}
                 </div>
@@ -227,7 +200,7 @@ export function Dashboard() {
       <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
         <Activity className="h-4 w-4 text-amber-500" />
         <span className="text-xs text-amber-200">
-          Running in Mock Mode — no real configuration changes will be made
+          Data is persisted via localStorage. No external tool configurations are modified.
         </span>
         <Button variant="link" size="sm" className="ml-auto text-amber-300" onClick={() => navigate("/profiles")}>
           Manage Profiles →

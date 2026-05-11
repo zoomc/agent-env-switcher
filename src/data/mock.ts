@@ -1,6 +1,6 @@
-import type { Profile, Target, DryRunResult, Backup, AppSettings, TargetType } from "@/types";
+import type { Profile, Target, DryRunResult, BackupRecord, AppSettings, TargetType } from "@/types";
 
-export const initialProfiles: Profile[] = [
+export const exampleProfiles: Profile[] = [
   {
     id: "profile-1",
     name: "DeepSeek Coding",
@@ -9,7 +9,7 @@ export const initialProfiles: Profile[] = [
     defaultModel: "deepseek-coder",
     fastModel: "deepseek-chat",
     reasoningModel: "deepseek-reasoner",
-    apiKey: "MOCK-sk-deepseek-xxxx",
+    apiKey: "MOCK_API_KEY_DEEPSEEK_DO_NOT_USE",
     enabledTargets: ["claude-code", "openclaw"],
     lastApplied: "2026-05-10T14:30:00Z",
     healthStatus: "healthy",
@@ -23,7 +23,7 @@ export const initialProfiles: Profile[] = [
     defaultModel: "moonshot-v1-8k",
     fastModel: "moonshot-v1-8k",
     reasoningModel: "moonshot-v1-32k",
-    apiKey: "MOCK-mk-kimi-xxxx",
+    apiKey: "MOCK_API_KEY_KIMI_DO_NOT_USE",
     enabledTargets: ["hermes"],
     lastApplied: "2026-05-09T10:00:00Z",
     healthStatus: "healthy",
@@ -37,7 +37,7 @@ export const initialProfiles: Profile[] = [
     defaultModel: "gpt-4o",
     fastModel: "gpt-4o-mini",
     reasoningModel: "o1",
-    apiKey: "MOCK-sk-openai-xxxx",
+    apiKey: "MOCK_API_KEY_OPENAI_DO_NOT_USE",
     enabledTargets: ["claude-code", "hermes", "openclaw"],
     lastApplied: "2026-05-08T16:45:00Z",
     healthStatus: "degraded",
@@ -51,7 +51,7 @@ export const initialProfiles: Profile[] = [
     defaultModel: "llama-3.3-70b",
     fastModel: "llama-3.1-8b",
     reasoningModel: "qwq-32b",
-    apiKey: "MOCK-local-no-key",
+    apiKey: "MOCK_API_KEY_LOCAL_GATEWAY_DO_NOT_USE",
     enabledTargets: ["claude-code", "openai-compatible-api"],
     lastApplied: null,
     healthStatus: "offline",
@@ -65,15 +65,15 @@ export const initialProfiles: Profile[] = [
     defaultModel: "anthropic/claude-sonnet-4",
     fastModel: "google/gemini-2.0-flash",
     reasoningModel: "openai/o3",
-    apiKey: "MOCK-sk-openrouter-xxxx",
-    enabledTargets: ["claude-code", "deepseek"],
+    apiKey: "MOCK_API_KEY_OPENROUTER_DO_NOT_USE",
+    enabledTargets: ["claude-code", "hermes"],
     lastApplied: "2026-05-07T09:15:00Z",
     healthStatus: "healthy",
     isActive: false,
   },
 ];
 
-export const mockTargets: Target[] = [
+export const knownTargets: Target[] = [
   {
     id: "target-1",
     type: "claude-code",
@@ -106,49 +106,9 @@ export const mockTargets: Target[] = [
     configPath: "Environment variables",
     isAvailable: true,
   },
-  {
-    id: "target-5",
-    type: "deepseek",
-    name: "DeepSeek",
-    description: "DeepSeek API direct integration",
-    configPath: "Environment variables",
-    isAvailable: true,
-  },
-  {
-    id: "target-6",
-    type: "kimi",
-    name: "Kimi (Moonshot)",
-    description: "Moonshot AI's Kimi API",
-    configPath: "Environment variables",
-    isAvailable: true,
-  },
-  {
-    id: "target-7",
-    type: "openai",
-    name: "OpenAI",
-    description: "OpenAI official API",
-    configPath: "Environment variables",
-    isAvailable: true,
-  },
-  {
-    id: "target-8",
-    type: "gemini-compatible",
-    name: "Gemini-Compatible",
-    description: "Google Gemini-compatible endpoint",
-    configPath: "Environment variables",
-    isAvailable: false,
-  },
-  {
-    id: "target-9",
-    type: "local-gateway",
-    name: "Local LLM Gateway",
-    description: "Local LLM proxy or gateway",
-    configPath: "Custom configuration",
-    isAvailable: true,
-  },
 ];
 
-export const initialBackups: Backup[] = [
+export const exampleBackups: BackupRecord[] = [
   {
     id: "backup-1",
     profileId: "profile-3",
@@ -172,13 +132,13 @@ export const initialBackups: Backup[] = [
     profileId: "profile-5",
     profileName: "OpenRouter Backup",
     timestamp: "2026-05-07T09:15:00Z",
-    targetTypes: ["claude-code", "deepseek"],
+    targetTypes: ["claude-code", "hermes"],
     fileCount: 2,
     size: "1.6 KB",
   },
 ];
 
-export const initialSettings: AppSettings = {
+export const defaultSettings: AppSettings = {
   theme: "dark",
   defaultProfileId: "profile-1",
   confirmBeforeApply: true,
@@ -192,11 +152,6 @@ const targetConfigPaths: Record<TargetType, string> = {
   "hermes": "~/.hermes/config.yaml",
   "openclaw": "~/.openclaw/settings.json",
   "openai-compatible-api": "Environment variables",
-  "deepseek": "Environment variables",
-  "kimi": "Environment variables",
-  "openai": "Environment variables",
-  "gemini-compatible": "Environment variables",
-  "local-gateway": "Custom configuration",
 };
 
 export function generateDryRunPreview(profile: Profile): DryRunResult[] {
@@ -205,7 +160,7 @@ export function generateDryRunPreview(profile: Profile): DryRunResult[] {
     profileId: profile.id,
     profileName: profile.name,
     targetType,
-    targetName: mockTargets.find((t) => t.type === targetType)?.name ?? targetType,
+    targetName: knownTargets.find((t) => t.type === targetType)?.name ?? targetType,
     timestamp: new Date().toISOString(),
     changes: [
       {

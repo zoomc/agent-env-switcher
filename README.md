@@ -4,7 +4,11 @@ Local-first AI profile manager for macOS.
 
 ## Current Status
 
-Phase 1 complete: Tauri app skeleton with mock UI. All data is mock — no real system configuration is read or modified.
+- Phase 1 / 1.1: Tauri app skeleton + mock UI + profile CRUD ✅
+- Phase 2A: Local profile persistence (localStorage) + data model cleanup ✅
+- Data is persisted via **localStorage** (Tauri FS integration planned for Phase 2B)
+- This app **only manages its own profile data** — it does not modify Claude Code, Hermes, or OpenClaw configurations
+- Real target adapters (Claude Code, Hermes, OpenClaw) are not yet implemented
 
 ## Positioning
 
@@ -38,6 +42,25 @@ npm run build
 - Rust toolchain (`rustup`)
 - macOS: Xcode Command Line Tools
 - Linux: `libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf`
+
+## Data Persistence (Phase 2A)
+
+Currently using **localStorage** as the persistence layer:
+
+- Profiles, settings, and backups are saved to `localStorage` automatically
+- Data persists across page refreshes within the same browser/WebView
+- Clearing browser data will reset to example profiles
+- Tauri FS integration (`~/.config/agent-env-switcher/`) is planned for Phase 2B
+
+## Provider / Target Model
+
+**Providers** (API endpoints):
+- `deepseek`, `kimi`, `openai`, `openrouter`, `local-gateway`, `openai-compatible`, `gemini-compatible`
+
+**Targets** (AI coding tools):
+- `claude-code`, `hermes`, `openclaw`, `openai-compatible-api`
+
+A Profile selects a Provider and enables one or more Targets.
 
 ## Covered Providers And Targets
 

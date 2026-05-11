@@ -13,9 +13,9 @@ import { useApp } from "@/store/AppContext";
 import { Play, AlertTriangle, FileText, ArrowRight } from "lucide-react";
 
 export function DryRun() {
-  const { profiles, activeProfile, dryRunResults, generateDryRun } = useApp();
+  const { profiles, dryRunResults, generateDryRun } = useApp();
   const [selectedProfileId, setSelectedProfileId] = useState(
-    activeProfile?.id ?? profiles[0]?.id ?? ""
+    profiles.find((p) => p.isActive)?.id ?? profiles[0]?.id ?? ""
   );
 
   const handleGenerate = () => {
@@ -26,17 +26,13 @@ export function DryRun() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Dry Run</h1>
-        <p className="text-muted-foreground">
-          Preview configuration changes before applying them
-        </p>
+        <p className="text-muted-foreground">Preview configuration changes before applying them</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Select Profile</CardTitle>
-          <CardDescription>
-            Choose a profile to preview its configuration changes
-          </CardDescription>
+          <CardDescription>Choose a profile to preview its configuration changes</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
@@ -48,16 +44,13 @@ export function DryRun() {
                 onClick={() => setSelectedProfileId(profile.id)}
               >
                 {profile.name}
-                {profile.isActive && (
-                  <Badge variant="secondary" className="ml-2 text-xs">Active</Badge>
-                )}
+                {profile.isActive && <Badge variant="secondary" className="ml-2 text-xs">Active</Badge>}
               </Button>
             ))}
           </div>
           <div className="mt-4">
             <Button size="sm" onClick={handleGenerate}>
-              <Play className="mr-1 h-4 w-4" />
-              Run Dry Run
+              <Play className="mr-1 h-4 w-4" />Run Dry Run
             </Button>
           </div>
         </CardContent>
@@ -65,9 +58,7 @@ export function DryRun() {
 
       <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
         <AlertTriangle className="h-4 w-4 text-amber-500" />
-        <span className="text-xs text-amber-200">
-          Dry Run mode — no changes will be applied to your system
-        </span>
+        <span className="text-xs text-amber-200">Dry Run mode — no changes will be applied to your system</span>
       </div>
 
       <div className="space-y-4">
@@ -81,13 +72,9 @@ export function DryRun() {
                     <Play className="h-4 w-4 text-primary" />
                     <CardTitle className="text-base">{result.targetName}</CardTitle>
                   </div>
-                  <Badge variant={result.status === "ready" ? "default" : "secondary"}>
-                    {result.status}
-                  </Badge>
+                  <Badge variant={result.status === "ready" ? "default" : "secondary"}>{result.status}</Badge>
                 </div>
-                <CardDescription>
-                  Profile: {result.profileName} · {new Date(result.timestamp).toLocaleString()}
-                </CardDescription>
+                <CardDescription>Profile: {result.profileName} · {new Date(result.timestamp).toLocaleString()}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
