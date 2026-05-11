@@ -1,6 +1,14 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
-import type { Profile, BackupRecord, AppSettings, DryRunResult } from "@/types";
-import { generateDryRunPreview } from "@/data/mock";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  type ReactNode,
+} from 'react';
+import type { Profile, BackupRecord, AppSettings, DryRunResult } from '@/types';
+import { generateDryRunPreview } from '@/data/mock';
 import {
   loadProfiles,
   saveProfiles,
@@ -13,7 +21,7 @@ import {
   exportProfiles,
   validateImport,
   parseImport,
-} from "@/lib/storage";
+} from '@/lib/storage';
 
 interface AppContextValue {
   profiles: Profile[];
@@ -23,7 +31,7 @@ interface AppContextValue {
   activeProfile: Profile | undefined;
   loadError: string | null;
   switchProfile: (id: string) => void;
-  addProfile: (profile: Omit<Profile, "id" | "isActive" | "lastApplied" | "healthStatus">) => void;
+  addProfile: (profile: Omit<Profile, 'id' | 'isActive' | 'lastApplied' | 'healthStatus'>) => void;
   updateProfile: (id: string, updates: Partial<Profile>) => void;
   deleteProfile: (id: string) => void;
   duplicateProfile: (id: string) => void;
@@ -32,7 +40,13 @@ interface AppContextValue {
   deleteBackup: (id: string) => void;
   handleExport: () => string;
   handleImport: (jsonString: string) => { success: boolean; error?: string };
-  importValidation: (jsonString: string) => { valid: boolean; error?: string; profileCount?: number; profileNames?: string[]; hasApiKeys?: boolean };
+  importValidation: (jsonString: string) => {
+    valid: boolean;
+    error?: string;
+    profileCount?: number;
+    profileNames?: string[];
+    hasApiKeys?: boolean;
+  };
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -43,7 +57,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       return loadProfiles();
     } catch (e) {
-      setLoadError("Failed to load saved profiles, using defaults");
+      setLoadError('Failed to load saved profiles, using defaults');
       console.error(e);
       return [];
     }
@@ -52,7 +66,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       return loadBackups();
     } catch (e) {
-      setLoadError((prev) => prev ? `${prev}; backups load failed` : "Failed to load saved backups, using defaults");
+      setLoadError((prev) =>
+        prev ? `${prev}; backups load failed` : 'Failed to load saved backups, using defaults'
+      );
       console.error(e);
       return [];
     }
@@ -61,7 +77,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       return loadSettings();
     } catch (e) {
-      setLoadError((prev) => prev ? `${prev}; settings load failed` : "Failed to load saved settings, using defaults");
+      setLoadError((prev) =>
+        prev ? `${prev}; settings load failed` : 'Failed to load saved settings, using defaults'
+      );
       console.error(e);
       return loadSettings();
     }
@@ -80,9 +98,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (savedId) {
       const exists = profiles.some((p) => p.id === savedId);
       if (exists) {
-        setProfiles((prev) =>
-          prev.map((p) => ({ ...p, isActive: p.id === savedId }))
-        );
+        setProfiles((prev) => prev.map((p) => ({ ...p, isActive: p.id === savedId })));
       }
     }
   }, []);
@@ -113,14 +129,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addProfile = useCallback(
-    (profile: Omit<Profile, "id" | "isActive" | "lastApplied" | "healthStatus">) => {
+    (profile: Omit<Profile, 'id' | 'isActive' | 'lastApplied' | 'healthStatus'>) => {
       const id = `profile-${Date.now()}`;
       const newProfile: Profile = {
         ...profile,
         id,
         isActive: false,
         lastApplied: null,
-        healthStatus: "unknown",
+        healthStatus: 'unknown',
       };
       setProfiles((prev) => [...prev, newProfile]);
     },
@@ -128,9 +144,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const updateProfile = useCallback((id: string, updates: Partial<Profile>) => {
-    setProfiles((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...updates } : p))
-    );
+    setProfiles((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
   }, []);
 
   const deleteProfile = useCallback((id: string) => {
@@ -169,15 +183,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  const generateDryRun = useCallback(
-    (profileId: string) => {
-      const profile = profilesRef.current.find((p) => p.id === profileId);
-      if (!profile) return;
-      const results = generateDryRunPreview(profile);
-      setDryRunResults(results);
-    },
-    []
-  );
+  const generateDryRun = useCallback((profileId: string) => {
+    const profile = profilesRef.current.find((p) => p.id === profileId);
+    if (!profile) return;
+    const results = generateDryRunPreview(profile);
+    setDryRunResults(results);
+  }, []);
 
   const deleteBackup = useCallback((id: string) => {
     setBackups((prev) => prev.filter((b) => b.id !== id));
@@ -202,7 +213,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       saveActiveProfileId(null);
       return { success: true };
     } catch (e) {
-      return { success: false, error: "Failed to parse import data" };
+      return { success: false, error: 'Failed to parse import data' };
     }
   }, []);
 
@@ -235,6 +246,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
 export function useApp() {
   const ctx = useContext(AppContext);
-  if (!ctx) throw new Error("useApp must be used within AppProvider");
+  if (!ctx) throw new Error('useApp must be used within AppProvider');
   return ctx;
 }

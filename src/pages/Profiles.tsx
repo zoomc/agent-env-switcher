@@ -1,16 +1,10 @@
-import { useState, useRef } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { maskApiKey } from "@/lib/mask";
-import { useApp } from "@/store/AppContext";
+import { useState, useRef } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { maskApiKey } from '@/lib/mask';
+import { useApp } from '@/store/AppContext';
 import {
   CheckCircle2,
   AlertTriangle,
@@ -29,8 +23,8 @@ import {
   Download,
   Upload,
   AlertCircle,
-} from "lucide-react";
-import type { HealthStatus, Profile, ProviderType, TargetType } from "@/types";
+} from 'lucide-react';
+import type { HealthStatus, Profile, ProviderType, TargetType } from '@/types';
 
 const healthIcons: Record<HealthStatus, React.ReactNode> = {
   healthy: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
@@ -40,12 +34,16 @@ const healthIcons: Record<HealthStatus, React.ReactNode> = {
 };
 
 const providerTypes: ProviderType[] = [
-  "openai-compatible", "deepseek", "kimi", "openai", "gemini-compatible", "local-gateway", "openrouter",
+  'openai-compatible',
+  'deepseek',
+  'kimi',
+  'openai',
+  'gemini-compatible',
+  'local-gateway',
+  'openrouter',
 ];
 
-const targetTypes: TargetType[] = [
-  "claude-code", "hermes", "openclaw", "openai-compatible-api",
-];
+const targetTypes: TargetType[] = ['claude-code', 'hermes', 'openclaw', 'openai-compatible-api'];
 
 interface ProfileFormData {
   name: string;
@@ -59,14 +57,14 @@ interface ProfileFormData {
 }
 
 const emptyForm: ProfileFormData = {
-  name: "",
-  providerType: "openai-compatible",
-  baseUrl: "https://api.example.com/v1",
-  defaultModel: "gpt-4o",
-  fastModel: "gpt-4o-mini",
-  reasoningModel: "o1",
-  apiKey: "MOCK_API_KEY_NEW_DO_NOT_USE",
-  enabledTargets: ["claude-code"],
+  name: '',
+  providerType: 'openai-compatible',
+  baseUrl: 'https://api.example.com/v1',
+  defaultModel: 'gpt-4o',
+  fastModel: 'gpt-4o-mini',
+  reasoningModel: 'o1',
+  apiKey: 'MOCK_API_KEY_NEW_DO_NOT_USE',
+  enabledTargets: ['claude-code'],
 };
 
 function ProfileForm({
@@ -96,63 +94,120 @@ function ProfileForm({
       <div className="grid gap-3 md:grid-cols-2">
         <div>
           <label className="text-xs text-muted-foreground">Name</label>
-          <input className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+          <input
+            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Provider</label>
-          <select className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm" value={form.providerType} onChange={(e) => setForm((f) => ({ ...f, providerType: e.target.value as ProviderType }))}>
-            {providerTypes.map((p) => (<option key={p} value={p}>{p}</option>))}
+          <select
+            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+            value={form.providerType}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, providerType: e.target.value as ProviderType }))
+            }
+          >
+            {providerTypes.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
           </select>
         </div>
         <div className="md:col-span-2">
           <label className="text-xs text-muted-foreground">Base URL</label>
-          <input className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm font-mono" value={form.baseUrl} onChange={(e) => setForm((f) => ({ ...f, baseUrl: e.target.value }))} />
+          <input
+            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm font-mono"
+            value={form.baseUrl}
+            onChange={(e) => setForm((f) => ({ ...f, baseUrl: e.target.value }))}
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Default Model</label>
-          <input className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm" value={form.defaultModel} onChange={(e) => setForm((f) => ({ ...f, defaultModel: e.target.value }))} />
+          <input
+            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+            value={form.defaultModel}
+            onChange={(e) => setForm((f) => ({ ...f, defaultModel: e.target.value }))}
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Fast Model</label>
-          <input className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm" value={form.fastModel} onChange={(e) => setForm((f) => ({ ...f, fastModel: e.target.value }))} />
+          <input
+            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+            value={form.fastModel}
+            onChange={(e) => setForm((f) => ({ ...f, fastModel: e.target.value }))}
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Reasoning Model</label>
-          <input className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm" value={form.reasoningModel} onChange={(e) => setForm((f) => ({ ...f, reasoningModel: e.target.value }))} />
+          <input
+            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+            value={form.reasoningModel}
+            onChange={(e) => setForm((f) => ({ ...f, reasoningModel: e.target.value }))}
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground">API Key (mock)</label>
-          <input className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm font-mono" value={form.apiKey} onChange={(e) => setForm((f) => ({ ...f, apiKey: e.target.value }))} />
+          <input
+            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm font-mono"
+            value={form.apiKey}
+            onChange={(e) => setForm((f) => ({ ...f, apiKey: e.target.value }))}
+          />
         </div>
       </div>
       <div>
         <label className="text-xs text-muted-foreground">Enabled Targets</label>
         <div className="mt-1 flex flex-wrap gap-2">
           {targetTypes.map((t) => (
-            <Badge key={t} variant={form.enabledTargets.includes(t) ? "default" : "outline"} className="cursor-pointer" onClick={() => toggleTarget(t)}>
+            <Badge
+              key={t}
+              variant={form.enabledTargets.includes(t) ? 'default' : 'outline'}
+              className="cursor-pointer"
+              onClick={() => toggleTarget(t)}
+            >
               {t}
             </Badge>
           ))}
         </div>
       </div>
       <div className="flex gap-2 pt-2">
-        <Button size="sm" onClick={() => onSubmit(form)}>{submitLabel}</Button>
-        <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
+        <Button size="sm" onClick={() => onSubmit(form)}>
+          {submitLabel}
+        </Button>
+        <Button variant="outline" size="sm" onClick={onCancel}>
+          Cancel
+        </Button>
       </div>
     </div>
   );
 }
 
 export function Profiles() {
-  const { profiles, switchProfile, addProfile, updateProfile, deleteProfile, duplicateProfile, handleExport, handleImport, importValidation } = useApp();
+  const {
+    profiles,
+    switchProfile,
+    addProfile,
+    updateProfile,
+    deleteProfile,
+    duplicateProfile,
+    handleExport,
+    handleImport,
+    importValidation,
+  } = useApp();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [revealedKeys, setRevealedKeys] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [importStep, setImportStep] = useState<"idle" | "preview" | "error">("idle");
-  const [importJson, setImportJson] = useState("");
-  const [importPreview, setImportPreview] = useState<{ profileCount: number; profileNames: string[]; hasApiKeys: boolean } | null>(null);
+  const [importStep, setImportStep] = useState<'idle' | 'preview' | 'error'>('idle');
+  const [importJson, setImportJson] = useState('');
+  const [importPreview, setImportPreview] = useState<{
+    profileCount: number;
+    profileNames: string[];
+    hasApiKeys: boolean;
+  } | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -164,7 +219,8 @@ export function Profiles() {
   const toggleKeyReveal = (id: string) => {
     setRevealedKeys((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -198,9 +254,9 @@ export function Profiles() {
 
   const onExport = () => {
     const json = handleExport();
-    const blob = new Blob([json], { type: "application/json" });
+    const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
     a.download = `agent-env-switcher-profiles-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
@@ -216,8 +272,8 @@ export function Profiles() {
       setImportJson(text);
       const validation = importValidation(text);
       if (!validation.valid) {
-        setImportError(validation.error ?? "Invalid file");
-        setImportStep("error");
+        setImportError(validation.error ?? 'Invalid file');
+        setImportStep('error');
         return;
       }
       setImportPreview({
@@ -226,27 +282,27 @@ export function Profiles() {
         hasApiKeys: validation.hasApiKeys ?? false,
       });
       setImportError(null);
-      setImportStep("preview");
+      setImportStep('preview');
     };
     reader.readAsText(file);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const confirmImport = () => {
     const result = handleImport(importJson);
     if (result.success) {
-      setImportStep("idle");
-      setImportJson("");
+      setImportStep('idle');
+      setImportJson('');
       setImportPreview(null);
     } else {
-      setImportError(result.error ?? "Import failed");
-      setImportStep("error");
+      setImportError(result.error ?? 'Import failed');
+      setImportStep('error');
     }
   };
 
   const cancelImport = () => {
-    setImportStep("idle");
-    setImportJson("");
+    setImportStep('idle');
+    setImportJson('');
     setImportPreview(null);
     setImportError(null);
   };
@@ -260,56 +316,77 @@ export function Profiles() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={onExport}>
-            <Download className="mr-1 h-4 w-4" />Export
+            <Download className="mr-1 h-4 w-4" />
+            Export
           </Button>
           <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-            <Upload className="mr-1 h-4 w-4" />Import
+            <Upload className="mr-1 h-4 w-4" />
+            Import
           </Button>
-          <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={onFileSelected} />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={onFileSelected}
+          />
           <Button size="sm" onClick={() => setShowNewForm(true)}>
-            <Plus className="mr-1 h-4 w-4" />New Profile
+            <Plus className="mr-1 h-4 w-4" />
+            New Profile
           </Button>
         </div>
       </div>
 
-      {importStep === "preview" && importPreview && (
+      {importStep === 'preview' && importPreview && (
         <Card className="border-blue-500/30">
           <CardHeader>
             <CardTitle className="text-base">Import Preview</CardTitle>
             <CardDescription>Review the profiles before importing</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm">Found <strong>{importPreview.profileCount}</strong> profile(s):</p>
+            <p className="text-sm">
+              Found <strong>{importPreview.profileCount}</strong> profile(s):
+            </p>
             <ul className="mt-2 space-y-1">
               {importPreview.profileNames.map((name, i) => (
-                <li key={i} className="text-sm text-muted-foreground">· {name}</li>
+                <li key={i} className="text-sm text-muted-foreground">
+                  · {name}
+                </li>
               ))}
             </ul>
             {importPreview.hasApiKeys && (
               <div className="mt-3 flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-2">
                 <AlertCircle className="h-4 w-4 text-amber-500" />
-                <span className="text-xs text-amber-200">This import contains API keys. They will be stored in localStorage.</span>
+                <span className="text-xs text-amber-200">
+                  This import contains API keys. They will be stored in localStorage.
+                </span>
               </div>
             )}
             <p className="mt-3 text-xs text-muted-foreground">
               Importing will replace all current profiles.
             </p>
             <div className="mt-3 flex gap-2">
-              <Button size="sm" onClick={confirmImport}>Confirm Import</Button>
-              <Button variant="outline" size="sm" onClick={cancelImport}>Cancel</Button>
+              <Button size="sm" onClick={confirmImport}>
+                Confirm Import
+              </Button>
+              <Button variant="outline" size="sm" onClick={cancelImport}>
+                Cancel
+              </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {importStep === "error" && importError && (
+      {importStep === 'error' && importError && (
         <Card className="border-destructive/30">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-destructive" />
               <span className="text-sm text-destructive">Import failed: {importError}</span>
             </div>
-            <Button variant="outline" size="sm" className="mt-3" onClick={cancelImport}>Dismiss</Button>
+            <Button variant="outline" size="sm" className="mt-3" onClick={cancelImport}>
+              Dismiss
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -319,20 +396,33 @@ export function Profiles() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">New Profile</CardTitle>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowNewForm(false)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setShowNewForm(false)}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <ProfileForm initial={emptyForm} onSubmit={handleNewProfile} onCancel={() => setShowNewForm(false)} submitLabel="Create" />
+            <ProfileForm
+              initial={emptyForm}
+              onSubmit={handleNewProfile}
+              onCancel={() => setShowNewForm(false)}
+              submitLabel="Create"
+            />
           </CardContent>
         </Card>
       )}
 
       <div className="space-y-4">
         {profiles.map((profile) => (
-          <Card key={profile.id} className={profile.isActive ? "ring-1 ring-primary/50" : undefined}>
+          <Card
+            key={profile.id}
+            className={profile.isActive ? 'ring-1 ring-primary/50' : undefined}
+          >
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -343,15 +433,22 @@ export function Profiles() {
                 <div className="flex items-center gap-2">
                   {!profile.isActive && (
                     <Button variant="outline" size="sm" onClick={() => switchProfile(profile.id)}>
-                      <ArrowRightLeft className="mr-1 h-3 w-3" />Switch
+                      <ArrowRightLeft className="mr-1 h-3 w-3" />
+                      Switch
                     </Button>
                   )}
                   <Button variant="ghost" size="sm" onClick={() => toggleExpand(profile.id)}>
-                    {expandedId === profile.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    {expandedId === profile.id ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </div>
-              <CardDescription>{profile.providerType} · {profile.baseUrl}</CardDescription>
+              <CardDescription>
+                {profile.providerType} · {profile.baseUrl}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
@@ -363,7 +460,12 @@ export function Profiles() {
                 <div className="mt-4 space-y-3">
                   <Separator />
                   {editingId === profile.id ? (
-                    <ProfileForm initial={profileToFormData(profile)} onSubmit={(data) => handleEditProfile(profile.id, data)} onCancel={() => setEditingId(null)} submitLabel="Save" />
+                    <ProfileForm
+                      initial={profileToFormData(profile)}
+                      onSubmit={(data) => handleEditProfile(profile.id, data)}
+                      onCancel={() => setEditingId(null)}
+                      submitLabel="Save"
+                    />
                   ) : (
                     <>
                       <div className="grid gap-3 md:grid-cols-2">
@@ -371,45 +473,93 @@ export function Profiles() {
                           <span className="text-xs text-muted-foreground">API Key</span>
                           <div className="mt-1 flex items-center gap-2">
                             <code className="rounded bg-muted px-2 py-1 text-sm font-mono">
-                              {revealedKeys.has(profile.id) ? profile.apiKey : maskApiKey(profile.apiKey)}
+                              {revealedKeys.has(profile.id)
+                                ? profile.apiKey
+                                : maskApiKey(profile.apiKey)}
                             </code>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleKeyReveal(profile.id)}>
-                              {revealedKeys.has(profile.id) ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => toggleKeyReveal(profile.id)}
+                            >
+                              {revealedKeys.has(profile.id) ? (
+                                <EyeOff className="h-3 w-3" />
+                              ) : (
+                                <Eye className="h-3 w-3" />
+                              )}
                             </Button>
                           </div>
                         </div>
                         <div>
                           <span className="text-xs text-muted-foreground">Last Applied</span>
-                          <p className="mt-1 text-sm">{profile.lastApplied ? new Date(profile.lastApplied).toLocaleString() : "Never"}</p>
+                          <p className="mt-1 text-sm">
+                            {profile.lastApplied
+                              ? new Date(profile.lastApplied).toLocaleString()
+                              : 'Never'}
+                          </p>
                         </div>
                       </div>
                       <div>
                         <span className="text-xs text-muted-foreground">Enabled Targets</span>
                         <div className="mt-1 flex flex-wrap gap-2">
                           {profile.enabledTargets.map((target) => (
-                            <Badge key={target} variant="secondary">{target}</Badge>
+                            <Badge key={target} variant="secondary">
+                              {target}
+                            </Badge>
                           ))}
                         </div>
                       </div>
                       {confirmDeleteId === profile.id ? (
                         <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
-                          <p className="text-sm text-destructive">Delete &quot;{profile.name}&quot;?</p>
-                          <p className="text-xs text-muted-foreground">This action cannot be undone.</p>
+                          <p className="text-sm text-destructive">
+                            Delete &quot;{profile.name}&quot;?
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            This action cannot be undone.
+                          </p>
                           <div className="mt-2 flex gap-2">
-                            <Button variant="destructive" size="sm" onClick={() => handleDelete(profile.id)}>Confirm Delete</Button>
-                            <Button variant="outline" size="sm" onClick={() => setConfirmDeleteId(null)}>Cancel</Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDelete(profile.id)}
+                            >
+                              Confirm Delete
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setConfirmDeleteId(null)}
+                            >
+                              Cancel
+                            </Button>
                           </div>
                         </div>
                       ) : (
                         <div className="flex gap-2 pt-2">
-                          <Button variant="outline" size="sm" onClick={() => setEditingId(profile.id)}>
-                            <Pencil className="mr-1 h-3 w-3" />Edit
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingId(profile.id)}
+                          >
+                            <Pencil className="mr-1 h-3 w-3" />
+                            Edit
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => duplicateProfile(profile.id)}>
-                            <Copy className="mr-1 h-3 w-3" />Duplicate
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => duplicateProfile(profile.id)}
+                          >
+                            <Copy className="mr-1 h-3 w-3" />
+                            Duplicate
                           </Button>
-                          <Button variant="destructive" size="sm" onClick={() => setConfirmDeleteId(profile.id)}>
-                            <Trash2 className="mr-1 h-3 w-3" />Delete
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setConfirmDeleteId(profile.id)}
+                          >
+                            <Trash2 className="mr-1 h-3 w-3" />
+                            Delete
                           </Button>
                         </div>
                       )}

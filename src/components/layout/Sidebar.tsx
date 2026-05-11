@@ -1,22 +1,14 @@
-import { NavLink } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  UserCircle,
-  Target,
-  Play,
-  Archive,
-  Settings,
-  Zap,
-} from "lucide-react";
+import { NavLink } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { LayoutDashboard, UserCircle, Target, Play, Archive, Settings, Zap } from 'lucide-react';
 
 const navItems = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/profiles", label: "Profiles", icon: UserCircle },
-  { to: "/targets", label: "Targets", icon: Target },
-  { to: "/dry-run", label: "Dry Run", icon: Play },
-  { to: "/backups", label: "Backups", icon: Archive },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/profiles', label: 'Profiles', icon: UserCircle },
+  { to: '/targets', label: 'Targets', icon: Target },
+  { to: '/dry-run', label: 'Dry Run', icon: Play },
+  { to: '/backups', label: 'Backups', icon: Archive },
+  { to: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export function Sidebar() {
@@ -31,13 +23,13 @@ export function Sidebar() {
           <NavLink
             key={item.to}
             to={item.to}
-            end={item.to === "/"}
+            end={item.to === '/'}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                 isActive
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               )
             }
           >

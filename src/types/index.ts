@@ -1,36 +1,32 @@
 export type ProviderType =
-  | "openai-compatible"
-  | "deepseek"
-  | "kimi"
-  | "openai"
-  | "gemini-compatible"
-  | "local-gateway"
-  | "openrouter";
+  | 'openai-compatible'
+  | 'deepseek'
+  | 'kimi'
+  | 'openai'
+  | 'gemini-compatible'
+  | 'local-gateway'
+  | 'openrouter';
 
-export type TargetType =
-  | "claude-code"
-  | "hermes"
-  | "openclaw"
-  | "openai-compatible-api";
+export type TargetType = 'claude-code' | 'hermes' | 'openclaw' | 'openai-compatible-api';
 
 export const VALID_PROVIDER_TYPES: readonly ProviderType[] = [
-  "openai-compatible",
-  "deepseek",
-  "kimi",
-  "openai",
-  "gemini-compatible",
-  "local-gateway",
-  "openrouter",
+  'openai-compatible',
+  'deepseek',
+  'kimi',
+  'openai',
+  'gemini-compatible',
+  'local-gateway',
+  'openrouter',
 ];
 
 export const VALID_TARGET_TYPES: readonly TargetType[] = [
-  "claude-code",
-  "hermes",
-  "openclaw",
-  "openai-compatible-api",
+  'claude-code',
+  'hermes',
+  'openclaw',
+  'openai-compatible-api',
 ];
 
-export type HealthStatus = "healthy" | "degraded" | "offline" | "unknown";
+export type HealthStatus = 'healthy' | 'degraded' | 'offline' | 'unknown';
 
 export interface Profile {
   id: string;
@@ -64,12 +60,12 @@ export interface DryRunResult {
   targetName: string;
   timestamp: string;
   changes: DryRunChange[];
-  status: "pending" | "ready" | "applied" | "failed";
+  status: 'pending' | 'ready' | 'applied' | 'failed';
 }
 
 export interface DryRunChange {
   file: string;
-  action: "create" | "modify" | "delete";
+  action: 'create' | 'modify' | 'delete';
   before: string;
   after: string;
 }
@@ -85,7 +81,7 @@ export interface BackupRecord {
 }
 
 export interface AppSettings {
-  theme: "dark" | "light" | "system";
+  theme: 'dark' | 'light' | 'system';
   defaultProfileId: string | null;
   confirmBeforeApply: boolean;
   autoBackup: boolean;

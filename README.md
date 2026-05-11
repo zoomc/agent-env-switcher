@@ -4,11 +4,11 @@ Local-first AI profile manager for macOS.
 
 ## Current Status
 
-| Phase | Description | Status |
-|-------|-------------|--------|
-| 1 / 1.1 | Tauri app skeleton + mock UI + profile CRUD | ✅ Done |
-| 2A | localStorage persistence + data model cleanup | ✅ Done |
-| 2B | Tauri FS integration (`~/.config/agent-env-switcher/`) | 🔲 Planned |
+| Phase   | Description                                            | Status     |
+| ------- | ------------------------------------------------------ | ---------- |
+| 1 / 1.1 | Tauri app skeleton + mock UI + profile CRUD            | ✅ Done    |
+| 2A      | localStorage persistence + data model cleanup          | ✅ Done    |
+| 2B      | Tauri FS integration (`~/.config/agent-env-switcher/`) | 🔲 Planned |
 
 **Important:**
 
@@ -70,12 +70,12 @@ Currently using **localStorage** as the persistence layer:
 
 localStorage keys:
 
-| Key | Content |
-|-----|---------|
-| `agent-env-switcher:profiles` | Profile list |
+| Key                                    | Content           |
+| -------------------------------------- | ----------------- |
+| `agent-env-switcher:profiles`          | Profile list      |
 | `agent-env-switcher:active-profile-id` | Active profile ID |
-| `agent-env-switcher:settings` | App settings |
-| `agent-env-switcher:backups` | Backup records |
+| `agent-env-switcher:settings`          | App settings      |
+| `agent-env-switcher:backups`           | Backup records    |
 
 Tauri FS integration (`~/.config/agent-env-switcher/`) is planned for Phase 2B.
 
@@ -83,23 +83,23 @@ Tauri FS integration (`~/.config/agent-env-switcher/`) is planned for Phase 2B.
 
 **Providers** (API endpoints):
 
-| Provider Type | Description |
-|---------------|-------------|
+| Provider Type       | Description                        |
+| ------------------- | ---------------------------------- |
 | `openai-compatible` | Generic OpenAI-compatible endpoint |
-| `deepseek` | DeepSeek API |
-| `kimi` | Moonshot (Kimi) API |
-| `openai` | OpenAI API |
-| `gemini-compatible` | Gemini-compatible endpoint |
-| `local-gateway` | Local LLM gateway |
-| `openrouter` | OpenRouter API |
+| `deepseek`          | DeepSeek API                       |
+| `kimi`              | Moonshot (Kimi) API                |
+| `openai`            | OpenAI API                         |
+| `gemini-compatible` | Gemini-compatible endpoint         |
+| `local-gateway`     | Local LLM gateway                  |
+| `openrouter`        | OpenRouter API                     |
 
 **Targets** (AI coding tools):
 
-| Target Type | Description |
-|-------------|-------------|
-| `claude-code` | Anthropic's CLI coding agent |
-| `hermes` | AI coding assistant |
-| `openclaw` | Open-source coding agent |
+| Target Type             | Description                        |
+| ----------------------- | ---------------------------------- |
+| `claude-code`           | Anthropic's CLI coding agent       |
+| `hermes`                | AI coding assistant                |
+| `openclaw`              | Open-source coding agent           |
 | `openai-compatible-api` | Any OpenAI-compatible API endpoint |
 
 A Profile selects a **Provider** and enables one or more **Targets**.

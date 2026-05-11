@@ -1,21 +1,15 @@
-import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { useApp } from "@/store/AppContext";
-import { Play, AlertTriangle, FileText, ArrowRight } from "lucide-react";
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { useApp } from '@/store/AppContext';
+import { Play, AlertTriangle, FileText, ArrowRight } from 'lucide-react';
 
 export function DryRun() {
   const { profiles, dryRunResults, generateDryRun } = useApp();
   const [selectedProfileId, setSelectedProfileId] = useState(
-    profiles.find((p) => p.isActive)?.id ?? profiles[0]?.id ?? ""
+    profiles.find((p) => p.isActive)?.id ?? profiles[0]?.id ?? ''
   );
 
   const handleGenerate = () => {
@@ -39,18 +33,23 @@ export function DryRun() {
             {profiles.map((profile) => (
               <Button
                 key={profile.id}
-                variant={selectedProfileId === profile.id ? "default" : "outline"}
+                variant={selectedProfileId === profile.id ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setSelectedProfileId(profile.id)}
               >
                 {profile.name}
-                {profile.isActive && <Badge variant="secondary" className="ml-2 text-xs">Active</Badge>}
+                {profile.isActive && (
+                  <Badge variant="secondary" className="ml-2 text-xs">
+                    Active
+                  </Badge>
+                )}
               </Button>
             ))}
           </div>
           <div className="mt-4">
             <Button size="sm" onClick={handleGenerate}>
-              <Play className="mr-1 h-4 w-4" />Run Dry Run
+              <Play className="mr-1 h-4 w-4" />
+              Run Dry Run
             </Button>
           </div>
         </CardContent>
@@ -58,7 +57,9 @@ export function DryRun() {
 
       <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
         <AlertTriangle className="h-4 w-4 text-amber-500" />
-        <span className="text-xs text-amber-200">Dry Run mode — no changes will be applied to your system</span>
+        <span className="text-xs text-amber-200">
+          Dry Run mode — no changes will be applied to your system
+        </span>
       </div>
 
       <div className="space-y-4">
@@ -72,9 +73,13 @@ export function DryRun() {
                     <Play className="h-4 w-4 text-primary" />
                     <CardTitle className="text-base">{result.targetName}</CardTitle>
                   </div>
-                  <Badge variant={result.status === "ready" ? "default" : "secondary"}>{result.status}</Badge>
+                  <Badge variant={result.status === 'ready' ? 'default' : 'secondary'}>
+                    {result.status}
+                  </Badge>
                 </div>
-                <CardDescription>Profile: {result.profileName} · {new Date(result.timestamp).toLocaleString()}</CardDescription>
+                <CardDescription>
+                  Profile: {result.profileName} · {new Date(result.timestamp).toLocaleString()}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -83,16 +88,22 @@ export function DryRun() {
                       <div className="flex items-center gap-2">
                         <FileText className="h-3 w-3 text-muted-foreground" />
                         <span className="text-sm font-mono">{change.file}</span>
-                        <Badge variant="outline" className="text-xs">{change.action}</Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {change.action}
+                        </Badge>
                       </div>
                       <div className="grid gap-2 md:grid-cols-2">
                         <div className="rounded-md bg-red-500/10 border border-red-500/20 p-3">
                           <p className="mb-1 text-xs font-medium text-red-400">Before</p>
-                          <pre className="text-xs font-mono text-red-300 whitespace-pre-wrap">{change.before}</pre>
+                          <pre className="text-xs font-mono text-red-300 whitespace-pre-wrap">
+                            {change.before}
+                          </pre>
                         </div>
                         <div className="rounded-md bg-emerald-500/10 border border-emerald-500/20 p-3">
                           <p className="mb-1 text-xs font-medium text-emerald-400">After</p>
-                          <pre className="text-xs font-mono text-emerald-300 whitespace-pre-wrap">{change.after}</pre>
+                          <pre className="text-xs font-mono text-emerald-300 whitespace-pre-wrap">
+                            {change.after}
+                          </pre>
                         </div>
                       </div>
                       <div className="flex items-center justify-center">
@@ -103,11 +114,16 @@ export function DryRun() {
                   <Separator />
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">
-                      {result.changes.length} change{result.changes.length !== 1 ? "s" : ""} detected
+                      {result.changes.length} change{result.changes.length !== 1 ? 's' : ''}{' '}
+                      detected
                     </span>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" disabled>Export Script</Button>
-                      <Button size="sm" disabled>Apply Changes</Button>
+                      <Button variant="outline" size="sm" disabled>
+                        Export Script
+                      </Button>
+                      <Button size="sm" disabled>
+                        Apply Changes
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -120,7 +136,9 @@ export function DryRun() {
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Play className="mb-3 h-8 w-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">No dry-run results yet</p>
-              <p className="text-xs text-muted-foreground">Click "Run Dry Run" to preview configuration changes</p>
+              <p className="text-xs text-muted-foreground">
+                Click "Run Dry Run" to preview configuration changes
+              </p>
             </CardContent>
           </Card>
         )}

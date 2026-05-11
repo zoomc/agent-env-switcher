@@ -1,17 +1,11 @@
-import { useNavigate } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { maskApiKey } from "@/lib/mask";
-import { useApp } from "@/store/AppContext";
-import { knownTargets } from "@/data/mock";
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { maskApiKey } from '@/lib/mask';
+import { useApp } from '@/store/AppContext';
+import { knownTargets } from '@/data/mock';
 import {
   Activity,
   ArrowRight,
@@ -23,8 +17,8 @@ import {
   Archive,
   UserCircle,
   Info,
-} from "lucide-react";
-import type { HealthStatus } from "@/types";
+} from 'lucide-react';
+import type { HealthStatus } from '@/types';
 
 const healthIcons: Record<HealthStatus, React.ReactNode> = {
   healthy: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
@@ -34,10 +28,10 @@ const healthIcons: Record<HealthStatus, React.ReactNode> = {
 };
 
 const healthLabels: Record<HealthStatus, string> = {
-  healthy: "Healthy",
-  degraded: "Degraded",
-  offline: "Offline",
-  unknown: "Unknown",
+  healthy: 'Healthy',
+  degraded: 'Degraded',
+  offline: 'Offline',
+  unknown: 'Unknown',
 };
 
 export function Dashboard() {
@@ -49,22 +43,23 @@ export function Dashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Overview of your AI profile environment
-        </p>
+        <p className="text-muted-foreground">Overview of your AI profile environment</p>
       </div>
 
       {loadError && (
         <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
           <AlertTriangle className="h-4 w-4 text-amber-500" />
-          <span className="text-xs text-amber-200">{loadError}. Default data has been loaded instead.</span>
+          <span className="text-xs text-amber-200">
+            {loadError}. Default data has been loaded instead.
+          </span>
         </div>
       )}
 
       <div className="flex items-center gap-2 rounded-md border border-blue-500/30 bg-blue-500/10 p-3">
         <Info className="h-4 w-4 text-blue-400" />
         <span className="text-xs text-blue-200">
-          This app only manages its own profile data. It does not modify Claude Code, Hermes, or OpenClaw configurations.
+          This app only manages its own profile data. It does not modify Claude Code, Hermes, or
+          OpenClaw configurations.
         </span>
       </div>
 
@@ -75,8 +70,10 @@ export function Dashboard() {
             <UserCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">{activeProfile?.name ?? "None"}</div>
-            <p className="text-xs text-muted-foreground">{activeProfile?.providerType ?? "No profile active"}</p>
+            <div className="text-xl font-bold">{activeProfile?.name ?? 'None'}</div>
+            <p className="text-xs text-muted-foreground">
+              {activeProfile?.providerType ?? 'No profile active'}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -85,7 +82,9 @@ export function Dashboard() {
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold">{availableTargets}/{knownTargets.length}</div>
+            <div className="text-xl font-bold">
+              {availableTargets}/{knownTargets.length}
+            </div>
             <p className="text-xs text-muted-foreground">Targets ready for configuration</p>
           </CardContent>
         </Card>
@@ -111,7 +110,15 @@ export function Dashboard() {
               </div>
               <div className="flex items-center gap-2">
                 {healthIcons[activeProfile.healthStatus]}
-                <Badge variant={activeProfile.healthStatus === "healthy" ? "default" : activeProfile.healthStatus === "degraded" ? "secondary" : "destructive"}>
+                <Badge
+                  variant={
+                    activeProfile.healthStatus === 'healthy'
+                      ? 'default'
+                      : activeProfile.healthStatus === 'degraded'
+                        ? 'secondary'
+                        : 'destructive'
+                  }
+                >
                   {healthLabels[activeProfile.healthStatus]}
                 </Badge>
               </div>
@@ -132,7 +139,9 @@ export function Dashboard() {
                 <Separator />
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">API Key</span>
-                  <span className="text-sm font-medium font-mono">{maskApiKey(activeProfile.apiKey)}</span>
+                  <span className="text-sm font-medium font-mono">
+                    {maskApiKey(activeProfile.apiKey)}
+                  </span>
                 </div>
               </div>
               <div className="space-y-3">
@@ -156,7 +165,9 @@ export function Dashboard() {
               <span className="text-sm text-muted-foreground">Enabled Targets:</span>
               <div className="mt-2 flex flex-wrap gap-2">
                 {activeProfile.enabledTargets.map((target) => (
-                  <Badge key={target} variant="outline">{target}</Badge>
+                  <Badge key={target} variant="outline">
+                    {target}
+                  </Badge>
                 ))}
               </div>
             </div>
@@ -177,14 +188,23 @@ export function Dashboard() {
         <CardContent>
           <div className="space-y-3">
             {profiles.map((profile) => (
-              <div key={profile.id} className="flex items-center justify-between rounded-md border border-border p-3">
+              <div
+                key={profile.id}
+                className="flex items-center justify-between rounded-md border border-border p-3"
+              >
                 <div className="flex items-center gap-3">
                   {healthIcons[profile.healthStatus]}
                   <span className="text-sm font-medium">{profile.name}</span>
-                  {profile.isActive && <Badge variant="default" className="text-xs">Active</Badge>}
+                  {profile.isActive && (
+                    <Badge variant="default" className="text-xs">
+                      Active
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{healthLabels[profile.healthStatus]}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {healthLabels[profile.healthStatus]}
+                  </span>
                   {!profile.isActive && (
                     <Button variant="ghost" size="sm" onClick={() => switchProfile(profile.id)}>
                       Switch <ArrowRight className="ml-1 h-3 w-3" />
@@ -202,7 +222,12 @@ export function Dashboard() {
         <span className="text-xs text-amber-200">
           Data is persisted via localStorage. No external tool configurations are modified.
         </span>
-        <Button variant="link" size="sm" className="ml-auto text-amber-300" onClick={() => navigate("/profiles")}>
+        <Button
+          variant="link"
+          size="sm"
+          className="ml-auto text-amber-300"
+          onClick={() => navigate('/profiles')}
+        >
           Manage Profiles →
         </Button>
       </div>
