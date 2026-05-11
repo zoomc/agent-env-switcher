@@ -1,4 +1,12 @@
-import type { Profile, TargetType, DryRunResult, DryRunChange } from '@/types';
+import type {
+  Profile,
+  TargetType,
+  DryRunResult,
+  DryRunChange,
+  BackupRecord,
+  HealthStatus,
+} from '@/types';
+import { RESTORE_SUPPORTED_TARGETS } from '@/types';
 import { knownTargets } from '@/data/mock';
 import { exists, mkdir, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { appConfigDir, homeDir } from '@tauri-apps/api/path';
@@ -6,7 +14,11 @@ import { appConfigDir, homeDir } from '@tauri-apps/api/path';
 export interface TargetAdapter {
   read(targetType: TargetType): Promise<string>;
   write(targetType: TargetType, profile: Profile): Promise<void>;
-  backup(targetType: TargetType): Promise<string>;
+  backup(
+    targetType: TargetType,
+    profileId: string,
+    profileName: string
+  ): Promise<BackupRecord | null>;
   diff(targetType: TargetType, profile: Profile, currentContent: string): DryRunChange | null;
 }
 
@@ -49,7 +61,20 @@ async function writeRawConfig(targetType: TargetType, content: string): Promise<
   await writeTextFile(fullPath, content);
 }
 
-async function createBackup(targetType: TargetType, originalContent: string): Promise<string> {
+async function computeChecksum(content: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(content);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function createBackupRecord(
+  targetType: TargetType,
+  originalContent: string,
+  profileId: string,
+  profileName: string
+): Promise<BackupRecord> {
   const appConfig = await appConfigDir();
   const backupDir = `${appConfig}agent-env-switcher/backups`;
   const dirExists = await exists(backupDir);
@@ -57,9 +82,26 @@ async function createBackup(targetType: TargetType, originalContent: string): Pr
     await mkdir(backupDir, { recursive: true });
   }
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const backupPath = `${backupDir}/${targetType}-${timestamp}.bak`;
+  const backupFileName = `${targetType}-${timestamp}.bak`;
+  const backupPath = `${backupDir}/${backupFileName}`;
   await writeTextFile(backupPath, originalContent);
-  return backupPath;
+
+  const checksum = await computeChecksum(originalContent);
+  const target = knownTargets.find((t) => t.type === targetType);
+
+  return {
+    id: `backup-${targetType}-${Date.now()}`,
+    targetType,
+    targetName: target?.name || targetType,
+    profileId,
+    profileName,
+    createdAt: new Date().toISOString(),
+    originalConfigPath: TARGET_CONFIG_PATHS[targetType] || 'Unknown',
+    backupFilePath: backupPath,
+    backupFileSize: new Blob([originalContent]).size,
+    restoreSupported: (RESTORE_SUPPORTED_TARGETS as readonly string[]).includes(targetType),
+    checksum,
+  };
 }
 
 function mergeJsonObject(
@@ -68,11 +110,7 @@ function mergeJsonObject(
     provider: string;
     baseUrl: string;
     apiKey: string;
-    models: {
-      default: string;
-      fast: string;
-      reasoning: string;
-    };
+    models: { default: string; fast: string; reasoning: string };
   }
 ): Record<string, unknown> {
   return {
@@ -98,7 +136,7 @@ function formatConfigJson(
   if (currentContent.trim()) {
     try {
       existing = JSON.parse(currentContent);
-    } catch (e) {
+    } catch {
       throw new Error(
         `${targetType} existing config is invalid JSON; cannot safely merge without overwriting`
       );
@@ -199,12 +237,14 @@ export const targetAdapter: TargetAdapter = {
     await writeRawConfig(targetType, content);
   },
 
-  async backup(targetType: TargetType): Promise<string> {
+  async backup(
+    targetType: TargetType,
+    profileId: string,
+    profileName: string
+  ): Promise<BackupRecord | null> {
     const raw = await readRawConfig(targetType);
-    if (!raw) {
-      return '';
-    }
-    return await createBackup(targetType, raw);
+    if (!raw) return null;
+    return await createBackupRecord(targetType, raw, profileId, profileName);
   },
 
   diff(targetType: TargetType, profile: Profile, currentContent: string): DryRunChange | null {
@@ -229,7 +269,6 @@ export async function generateDryRun(profile: Profile): Promise<DryRunResult[]> 
       }
     } catch (err) {
       status = 'failed';
-      // 即使失败也记录一下提示
       changes = [
         {
           file: TARGET_CONFIG_PATHS[targetType] || 'Unknown',
@@ -258,12 +297,12 @@ export async function applyProfile(profile: Profile): Promise<{
   success: boolean;
   errors: string[];
   warnings: string[];
-  backupPaths: string[];
+  backupRecords: BackupRecord[];
   appliedTargets: TargetType[];
 }> {
   const errors: string[] = [];
   const warnings: string[] = [];
-  const backupPaths: string[] = [];
+  const backupRecords: BackupRecord[] = [];
   const appliedTargets: TargetType[] = [];
   for (const targetType of profile.enabledTargets) {
     if (targetType === 'openai-compatible-api') {
@@ -277,8 +316,8 @@ export async function applyProfile(profile: Profile): Promise<{
       continue;
     }
     try {
-      const backup = await targetAdapter.backup(targetType);
-      if (backup) backupPaths.push(backup);
+      const backup = await targetAdapter.backup(targetType, profile.id, profile.name);
+      if (backup) backupRecords.push(backup);
       await targetAdapter.write(targetType, profile);
       appliedTargets.push(targetType);
     } catch (err) {
@@ -289,7 +328,153 @@ export async function applyProfile(profile: Profile): Promise<{
     success: errors.length === 0 && appliedTargets.length > 0,
     errors,
     warnings,
-    backupPaths,
+    backupRecords,
     appliedTargets,
   };
+}
+
+export async function restoreBackup(backupRecord: BackupRecord): Promise<{
+  success: boolean;
+  error?: string;
+  preRestoreBackup?: BackupRecord;
+}> {
+  if (!backupRecord.restoreSupported) {
+    return {
+      success: false,
+      error: `Restore not supported for target: ${backupRecord.targetType}`,
+    };
+  }
+
+  const backupExists = await exists(backupRecord.backupFilePath);
+  if (!backupExists) {
+    return { success: false, error: `Backup file not found: ${backupRecord.backupFilePath}` };
+  }
+
+  let backupContent: string;
+  try {
+    backupContent = await readTextFile(backupRecord.backupFilePath);
+  } catch {
+    return { success: false, error: `Failed to read backup file: ${backupRecord.backupFilePath}` };
+  }
+
+  if (backupRecord.targetType === 'claude-code' || backupRecord.targetType === 'openclaw') {
+    try {
+      JSON.parse(backupContent);
+    } catch {
+      return { success: false, error: 'Backup content is invalid JSON; cannot safely restore' };
+    }
+  }
+
+  let preRestoreBackup: BackupRecord | undefined;
+  const currentContent = await readRawConfig(backupRecord.targetType);
+  if (currentContent) {
+    try {
+      preRestoreBackup = await createBackupRecord(
+        backupRecord.targetType,
+        currentContent,
+        backupRecord.profileId,
+        backupRecord.profileName
+      );
+    } catch {
+      return { success: false, error: 'Failed to create pre-restore backup; aborting restore' };
+    }
+  }
+
+  try {
+    await writeRawConfig(backupRecord.targetType, backupContent);
+  } catch (err) {
+    return {
+      success: false,
+      error: `Failed to write restored config: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+
+  return { success: true, preRestoreBackup };
+}
+
+export async function previewRestore(backupRecord: BackupRecord): Promise<{
+  canRestore: boolean;
+  error?: string;
+  diff: DryRunChange | null;
+}> {
+  if (!backupRecord.restoreSupported) {
+    return {
+      canRestore: false,
+      error: `Restore not supported for target: ${backupRecord.targetType}`,
+      diff: null,
+    };
+  }
+
+  const backupExists = await exists(backupRecord.backupFilePath);
+  if (!backupExists) {
+    return {
+      canRestore: false,
+      error: `Backup file not found: ${backupRecord.backupFilePath}`,
+      diff: null,
+    };
+  }
+
+  let backupContent: string;
+  try {
+    backupContent = await readTextFile(backupRecord.backupFilePath);
+  } catch {
+    return { canRestore: false, error: `Failed to read backup file`, diff: null };
+  }
+
+  if (backupRecord.targetType === 'claude-code' || backupRecord.targetType === 'openclaw') {
+    try {
+      JSON.parse(backupContent);
+    } catch {
+      return {
+        canRestore: false,
+        error: 'Backup content is invalid JSON; cannot safely restore',
+        diff: null,
+      };
+    }
+  }
+
+  const currentContent = await readRawConfig(backupRecord.targetType);
+  const diff = createDiff(backupRecord.targetType, currentContent || '', backupContent);
+
+  return { canRestore: true, diff };
+}
+
+export async function checkTargetHealth(targetType: TargetType): Promise<HealthStatus> {
+  if (targetType === 'openai-compatible-api') {
+    return 'unknown';
+  }
+  if (targetType === 'hermes') {
+    const path = TARGET_CONFIG_PATHS[targetType];
+    const fullPath = await resolveHomePath(path);
+    const fileExists = await exists(fullPath);
+    if (!fileExists) return 'unknown';
+    return 'unknown';
+  }
+
+  const path = TARGET_CONFIG_PATHS[targetType];
+  const fullPath = await resolveHomePath(path);
+  const fileExists = await exists(fullPath);
+  if (!fileExists) return 'unknown';
+
+  try {
+    const content = await readTextFile(fullPath);
+    const parsed = JSON.parse(content);
+    if (typeof parsed !== 'object' || parsed === null) return 'broken';
+    if (!parsed.provider && !parsed.baseUrl && !parsed.apiKey) return 'warning';
+    return 'healthy';
+  } catch {
+    return 'broken';
+  }
+}
+
+export async function checkProfileHealth(profile: Profile): Promise<HealthStatus> {
+  const targetHealths: HealthStatus[] = [];
+  for (const targetType of profile.enabledTargets) {
+    const health = await checkTargetHealth(targetType);
+    targetHealths.push(health);
+  }
+  if (targetHealths.every((h) => h === 'healthy')) return 'healthy';
+  if (targetHealths.some((h) => h === 'broken')) return 'broken';
+  if (targetHealths.some((h) => h === 'warning')) return 'warning';
+  return 'unknown';
 }

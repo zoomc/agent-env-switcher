@@ -28,8 +28,8 @@ import type { HealthStatus, Profile, ProviderType, TargetType } from '@/types';
 
 const healthIcons: Record<HealthStatus, React.ReactNode> = {
   healthy: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
-  degraded: <AlertTriangle className="h-4 w-4 text-amber-500" />,
-  offline: <XCircle className="h-4 w-4 text-red-500" />,
+  warning: <AlertTriangle className="h-4 w-4 text-amber-500" />,
+  broken: <XCircle className="h-4 w-4 text-red-500" />,
   unknown: <HelpCircle className="h-4 w-4 text-muted-foreground" />,
 };
 

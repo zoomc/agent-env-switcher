@@ -7,10 +7,29 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import type { Profile, BackupRecord, AppSettings, DryRunResult } from '@/types';
+import type {
+  Profile,
+  BackupRecord,
+  AppSettings,
+  DryRunResult,
+  DryRunChange,
+  HealthStatus,
+} from '@/types';
 import * as tauriStorage from '@/lib/tauriStorage';
 import * as localStorage from '@/lib/storage';
-import { generateDryRun as generateRealDryRun, applyProfile } from '@/lib/targetAdapters';
+import {
+  generateDryRun as generateRealDryRun,
+  applyProfile,
+  restoreBackup as doRestoreBackup,
+  previewRestore as doPreviewRestore,
+  checkProfileHealth,
+} from '@/lib/targetAdapters';
+
+interface RestorePreview {
+  canRestore: boolean;
+  error?: string;
+  diff: DryRunChange | null;
+}
 
 interface AppContextValue {
   profiles: Profile[];
@@ -43,6 +62,13 @@ interface AppContextValue {
   };
   applyChanges: (profileId: string) => Promise<void>;
   clearApplyState: () => void;
+  previewRestore: (backupRecord: BackupRecord) => Promise<RestorePreview>;
+  restoreBackup: (backupRecord: BackupRecord) => Promise<{
+    success: boolean;
+    error?: string;
+    preRestoreBackup?: BackupRecord;
+  }>;
+  refreshHealth: (profileId: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -305,11 +331,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const result = await applyProfile(profile);
       setApplyWarnings(result.warnings);
+      if (result.backupRecords.length > 0) {
+        setBackups((prev) => [...result.backupRecords, ...prev]);
+      }
       if (result.success) {
         setProfiles((prev) =>
           prev.map((p) =>
             p.id === profileId
-              ? { ...p, lastApplied: new Date().toISOString(), healthStatus: 'healthy' }
+              ? {
+                  ...p,
+                  lastApplied: new Date().toISOString(),
+                  healthStatus: 'healthy' as HealthStatus,
+                }
               : p
           )
         );
@@ -317,25 +350,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } else if (result.errors.length > 0) {
         setApplyError(result.errors.join('; '));
       }
-      // 更新每个 DryRunResult 的状态
       setDryRunResults((prev) =>
         prev.map((r) => {
           if (r.profileId !== profileId) return r;
-          // 如果没有 changes，保持原样
           if (r.status === 'pending') return r;
-          // 如果这个 target 被 applied
           if (result.appliedTargets.includes(r.targetType)) {
             return { ...r, status: 'applied' };
           }
-          // 如果有 errors，并且这个 target 在 errors 里
           const hasErrorForTarget = result.errors.some((e) => e.startsWith(`${r.targetType}:`));
           if (hasErrorForTarget) {
             return { ...r, status: 'failed' };
           }
-          // 其他情况保持原样（比如 skipped 的）
           return r;
         })
       );
+      try {
+        const health = await checkProfileHealth(profile);
+        setProfiles((prev) =>
+          prev.map((p) => (p.id === profileId ? { ...p, healthStatus: health } : p))
+        );
+      } catch {}
     } catch (err) {
       setApplyError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -347,6 +381,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setApplyError(null);
     setApplySuccess(false);
     setApplyWarnings([]);
+  }, []);
+
+  const previewRestoreFn = useCallback(
+    async (backupRecord: BackupRecord): Promise<RestorePreview> => {
+      return await doPreviewRestore(backupRecord);
+    },
+    []
+  );
+
+  const restoreBackupFn = useCallback(async (backupRecord: BackupRecord) => {
+    const result = await doRestoreBackup(backupRecord);
+    if (result.success && result.preRestoreBackup) {
+      setBackups((prev) => [result.preRestoreBackup!, ...prev]);
+    }
+    return result;
+  }, []);
+
+  const refreshHealth = useCallback(async (profileId: string) => {
+    const profile = profilesRef.current.find((p) => p.id === profileId);
+    if (!profile) return;
+    try {
+      const health = await checkProfileHealth(profile);
+      setProfiles((prev) =>
+        prev.map((p) => (p.id === profileId ? { ...p, healthStatus: health } : p))
+      );
+    } catch {}
   }, []);
 
   return (
@@ -376,6 +436,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         importValidation,
         applyChanges,
         clearApplyState,
+        previewRestore: previewRestoreFn,
+        restoreBackup: restoreBackupFn,
+        refreshHealth,
       }}
     >
       {children}

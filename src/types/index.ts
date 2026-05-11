@@ -26,7 +26,9 @@ export const VALID_TARGET_TYPES: readonly TargetType[] = [
   'openai-compatible-api',
 ];
 
-export type HealthStatus = 'healthy' | 'degraded' | 'offline' | 'unknown';
+export const RESTORE_SUPPORTED_TARGETS: readonly TargetType[] = ['claude-code', 'openclaw'];
+
+export type HealthStatus = 'healthy' | 'warning' | 'broken' | 'unknown';
 
 export interface Profile {
   id: string;
@@ -72,12 +74,16 @@ export interface DryRunChange {
 
 export interface BackupRecord {
   id: string;
+  targetType: TargetType;
+  targetName: string;
   profileId: string;
   profileName: string;
-  timestamp: string;
-  targetTypes: TargetType[];
-  fileCount: number;
-  size: string;
+  createdAt: string;
+  originalConfigPath: string;
+  backupFilePath: string;
+  backupFileSize: number;
+  restoreSupported: boolean;
+  checksum: string;
 }
 
 export interface AppSettings {

@@ -1,4 +1,5 @@
 import type { Profile, Target, DryRunResult, BackupRecord, AppSettings, TargetType } from '@/types';
+import { RESTORE_SUPPORTED_TARGETS } from '@/types';
 
 export const exampleProfiles: Profile[] = [
   {
@@ -40,7 +41,7 @@ export const exampleProfiles: Profile[] = [
     apiKey: 'MOCK_API_KEY_OPENAI_DO_NOT_USE',
     enabledTargets: ['claude-code', 'hermes', 'openclaw'],
     lastApplied: '2026-05-08T16:45:00Z',
-    healthStatus: 'degraded',
+    healthStatus: 'warning',
     isActive: false,
   },
   {
@@ -54,7 +55,7 @@ export const exampleProfiles: Profile[] = [
     apiKey: 'MOCK_API_KEY_LOCAL_GATEWAY_DO_NOT_USE',
     enabledTargets: ['claude-code', 'openai-compatible-api'],
     lastApplied: null,
-    healthStatus: 'offline',
+    healthStatus: 'broken',
     isActive: false,
   },
   {
@@ -110,31 +111,60 @@ export const knownTargets: Target[] = [
 
 export const exampleBackups: BackupRecord[] = [
   {
-    id: 'backup-1',
+    id: 'backup-claude-code-1746900600000',
+    targetType: 'claude-code',
+    targetName: 'Claude Code',
     profileId: 'profile-3',
     profileName: 'OpenAI Main',
-    timestamp: '2026-05-08T16:45:00Z',
-    targetTypes: ['claude-code', 'hermes', 'openclaw'],
-    fileCount: 3,
-    size: '2.4 KB',
+    createdAt: '2026-05-08T16:45:00Z',
+    originalConfigPath: '.claude/config.json',
+    backupFilePath:
+      '~/Library/Application Support/com.agent-env-switcher/app/agent-env-switcher/backups/claude-code-2026-05-08T16-45-00-000Z.bak',
+    backupFileSize: 512,
+    restoreSupported: true,
+    checksum: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2',
   },
   {
-    id: 'backup-2',
+    id: 'backup-openclaw-1746897000000',
+    targetType: 'openclaw',
+    targetName: 'OpenClaw',
+    profileId: 'profile-3',
+    profileName: 'OpenAI Main',
+    createdAt: '2026-05-08T16:45:00Z',
+    originalConfigPath: '.openclaw/settings.json',
+    backupFilePath:
+      '~/Library/Application Support/com.agent-env-switcher/app/agent-env-switcher/backups/openclaw-2026-05-08T16-45-00-000Z.bak',
+    backupFileSize: 384,
+    restoreSupported: true,
+    checksum: 'f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5',
+  },
+  {
+    id: 'backup-claude-code-1746893400000',
+    targetType: 'claude-code',
+    targetName: 'Claude Code',
     profileId: 'profile-1',
     profileName: 'DeepSeek Coding',
-    timestamp: '2026-05-10T14:30:00Z',
-    targetTypes: ['claude-code', 'openclaw'],
-    fileCount: 2,
-    size: '1.8 KB',
+    createdAt: '2026-05-10T14:30:00Z',
+    originalConfigPath: '.claude/config.json',
+    backupFilePath:
+      '~/Library/Application Support/com.agent-env-switcher/app/agent-env-switcher/backups/claude-code-2026-05-10T14-30-00-000Z.bak',
+    backupFileSize: 480,
+    restoreSupported: true,
+    checksum: '1a2b3c4d5e6f1a2b3c4d5e6f1a2b3c4d5e6f1a2b3c4d5e6f1a2b3c4d5e6f1a2b',
   },
   {
-    id: 'backup-3',
+    id: 'backup-hermes-1746889800000',
+    targetType: 'hermes',
+    targetName: 'Hermes',
     profileId: 'profile-5',
     profileName: 'OpenRouter Backup',
-    timestamp: '2026-05-07T09:15:00Z',
-    targetTypes: ['claude-code', 'hermes'],
-    fileCount: 2,
-    size: '1.6 KB',
+    createdAt: '2026-05-07T09:15:00Z',
+    originalConfigPath: '.hermes/config.yaml',
+    backupFilePath:
+      '~/Library/Application Support/com.agent-env-switcher/app/agent-env-switcher/backups/hermes-2026-05-07T09-15-00-000Z.bak',
+    backupFileSize: 256,
+    restoreSupported: false,
+    checksum: 'abcdef123456abcdef123456abcdef123456abcdef123456abcdef123456abcd',
   },
 ];
 
