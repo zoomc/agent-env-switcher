@@ -84,9 +84,12 @@ function BackupCard({ backup }: { backup: BackupRecord }) {
     message: string;
   } | null>(null);
 
+  const canRestore = showPreview && previewDiff !== null;
+
   const handlePreview = async () => {
     if (showPreview) {
       setShowPreview(false);
+      setPreviewDiff(null);
       return;
     }
     setPreviewLoading(true);
@@ -181,10 +184,20 @@ function BackupCard({ backup }: { backup: BackupRecord }) {
                 </Button>
               )}
               {backup.restoreSupported && !restoreConfirm && (
-                <Button variant="outline" size="sm" onClick={() => setRestoreConfirm(true)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!canRestore}
+                  onClick={() => setRestoreConfirm(true)}
+                >
                   <RotateCcw className="mr-1 h-3 w-3" />
                   Restore
                 </Button>
+              )}
+              {!canRestore && backup.restoreSupported && (
+                <span className="text-xs text-muted-foreground">
+                  Preview is required before restore
+                </span>
               )}
               {!backup.restoreSupported && (
                 <Button variant="outline" size="sm" disabled>

@@ -161,25 +161,7 @@ function formatConfigForDiff(
   currentContent: string
 ): string {
   if (targetType === 'claude-code' || targetType === 'openclaw') {
-    try {
-      return formatConfigJson(targetType, profile, currentContent);
-    } catch {
-      const existing = currentContent.trim() ? JSON.parse(currentContent) : {};
-      return JSON.stringify(
-        mergeJsonObject(existing, {
-          provider: profile.providerType,
-          baseUrl: profile.baseUrl,
-          apiKey: profile.apiKey,
-          models: {
-            default: profile.defaultModel,
-            fast: profile.fastModel,
-            reasoning: profile.reasoningModel,
-          },
-        }),
-        null,
-        2
-      );
-    }
+    return formatConfigJson(targetType, profile, currentContent);
   }
   if (targetType === 'hermes') {
     return `provider: ${profile.providerType}
@@ -460,7 +442,7 @@ export async function checkTargetHealth(targetType: TargetType): Promise<HealthS
     const content = await readTextFile(fullPath);
     const parsed = JSON.parse(content);
     if (typeof parsed !== 'object' || parsed === null) return 'broken';
-    if (!parsed.provider && !parsed.baseUrl && !parsed.apiKey) return 'warning';
+    if (!parsed.provider || !parsed.baseUrl || !parsed.apiKey) return 'warning';
     return 'healthy';
   } catch {
     return 'broken';
