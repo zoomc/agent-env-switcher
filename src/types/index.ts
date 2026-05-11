@@ -13,6 +13,23 @@ export type TargetType =
   | "openclaw"
   | "openai-compatible-api";
 
+export const VALID_PROVIDER_TYPES: readonly ProviderType[] = [
+  "openai-compatible",
+  "deepseek",
+  "kimi",
+  "openai",
+  "gemini-compatible",
+  "local-gateway",
+  "openrouter",
+];
+
+export const VALID_TARGET_TYPES: readonly TargetType[] = [
+  "claude-code",
+  "hermes",
+  "openclaw",
+  "openai-compatible-api",
+];
+
 export type HealthStatus = "healthy" | "degraded" | "offline" | "unknown";
 
 export interface Profile {

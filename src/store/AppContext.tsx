@@ -4,6 +4,8 @@ import { generateDryRunPreview } from "@/data/mock";
 import {
   loadProfiles,
   saveProfiles,
+  loadActiveProfileId,
+  saveActiveProfileId,
   loadSettings,
   saveSettings,
   loadBackups,
@@ -46,8 +48,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return [];
     }
   });
-  const [backups, setBackups] = useState<BackupRecord[]>(() => loadBackups());
-  const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
+  const [backups, setBackups] = useState<BackupRecord[]>(() => {
+    try {
+      return loadBackups();
+    } catch (e) {
+      setLoadError((prev) => prev ? `${prev}; backups load failed` : "Failed to load saved backups, using defaults");
+      console.error(e);
+      return [];
+    }
+  });
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    try {
+      return loadSettings();
+    } catch (e) {
+      setLoadError((prev) => prev ? `${prev}; settings load failed` : "Failed to load saved settings, using defaults");
+      console.error(e);
+      return loadSettings();
+    }
+  });
   const [dryRunResults, setDryRunResults] = useState<DryRunResult[]>([]);
 
   const profilesRef = useRef(profiles);
@@ -56,6 +74,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   backupsRef.current = backups;
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
+
+  useEffect(() => {
+    const savedId = loadActiveProfileId();
+    if (savedId) {
+      const exists = profiles.some((p) => p.id === savedId);
+      if (exists) {
+        setProfiles((prev) =>
+          prev.map((p) => ({ ...p, isActive: p.id === savedId }))
+        );
+      }
+    }
+  }, []);
 
   const activeProfile = profiles.find((p) => p.isActive);
 
@@ -79,6 +109,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         lastApplied: p.id === id ? new Date().toISOString() : p.lastApplied,
       }))
     );
+    saveActiveProfileId(id);
   }, []);
 
   const addProfile = useCallback(
@@ -106,9 +137,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setProfiles((prev) => {
       const target = prev.find((p) => p.id === id);
       if (target?.isActive && prev.length > 1) {
-        return prev
-          .filter((p) => p.id !== id)
-          .map((p, i) => (i === 0 ? { ...p, isActive: true } : p));
+        const remaining = prev.filter((p) => p.id !== id);
+        const newActive = remaining[0];
+        saveActiveProfileId(newActive.id);
+        return remaining.map((p, i) => (i === 0 ? { ...p, isActive: true } : p));
+      }
+      if (target?.isActive) {
+        saveActiveProfileId(null);
       }
       return prev.filter((p) => p.id !== id);
     });
@@ -164,6 +199,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const imported = parseImport(jsonString);
       setProfiles(imported);
+      saveActiveProfileId(null);
       return { success: true };
     } catch (e) {
       return { success: false, error: "Failed to parse import data" };

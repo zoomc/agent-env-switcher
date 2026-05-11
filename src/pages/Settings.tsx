@@ -9,10 +9,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useApp } from "@/store/AppContext";
-import { ChevronDown, ChevronUp, Save, Info } from "lucide-react";
+import { ChevronDown, ChevronUp, Save, Info, AlertTriangle } from "lucide-react";
 
 export function Settings() {
-  const { settings, updateSettings, profiles } = useApp();
+  const { settings, updateSettings, profiles, loadError } = useApp();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -27,6 +27,13 @@ export function Settings() {
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground">Application preferences and behavior</p>
       </div>
+
+      {loadError && (
+        <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <span className="text-xs text-amber-200">{loadError}. Default data has been loaded instead.</span>
+        </div>
+      )}
 
       <div className="flex items-center gap-2 rounded-md border border-blue-500/30 bg-blue-500/10 p-3">
         <Info className="h-4 w-4 text-blue-400" />

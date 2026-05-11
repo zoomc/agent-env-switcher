@@ -57,7 +57,7 @@ export function Dashboard() {
       {loadError && (
         <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
           <AlertTriangle className="h-4 w-4 text-amber-500" />
-          <span className="text-xs text-amber-200">{loadError}</span>
+          <span className="text-xs text-amber-200">{loadError}. Default data has been loaded instead.</span>
         </div>
       )}
 

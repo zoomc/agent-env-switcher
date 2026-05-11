@@ -1,4 +1,5 @@
 import type { Profile, BackupRecord, AppSettings, ExportData } from "@/types";
+import { VALID_PROVIDER_TYPES, VALID_TARGET_TYPES } from "@/types";
 import { exampleProfiles, exampleBackups, defaultSettings } from "@/data/mock";
 
 const KEYS = {
@@ -30,6 +31,29 @@ export function saveProfiles(profiles: Profile[]): void {
     localStorage.setItem(KEYS.profiles, JSON.stringify(profiles));
   } catch (e) {
     console.error("Failed to save profiles to localStorage:", e);
+  }
+}
+
+export function loadActiveProfileId(): string | null {
+  const raw = localStorage.getItem(KEYS.activeProfileId);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return typeof parsed === "string" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveActiveProfileId(id: string | null): void {
+  try {
+    if (id) {
+      localStorage.setItem(KEYS.activeProfileId, JSON.stringify(id));
+    } else {
+      localStorage.removeItem(KEYS.activeProfileId);
+    }
+  } catch (e) {
+    console.error("Failed to save activeProfileId to localStorage:", e);
   }
 }
 
@@ -104,14 +128,53 @@ export function validateImport(jsonString: string): ImportValidation {
 
   for (let i = 0; i < profiles.length; i++) {
     const p = profiles[i];
+
     if (!p.name || typeof p.name !== "string") {
       return { valid: false, error: `Profile at index ${i} is missing a valid 'name'` };
     }
+
     if (!p.providerType || typeof p.providerType !== "string") {
       return { valid: false, error: `Profile "${p.name}" is missing a valid 'providerType'` };
     }
+
+    if (!VALID_PROVIDER_TYPES.includes(p.providerType as Profile["providerType"])) {
+      return {
+        valid: false,
+        error: `Profile "${p.name}" has invalid providerType "${p.providerType}". Valid values: ${VALID_PROVIDER_TYPES.join(", ")}`,
+      };
+    }
+
     if (!p.baseUrl || typeof p.baseUrl !== "string") {
       return { valid: false, error: `Profile "${p.name}" is missing a valid 'baseUrl'` };
+    }
+
+    if (typeof p.apiKey !== "string") {
+      return { valid: false, error: `Profile "${p.name}" has an invalid 'apiKey' (must be a string)` };
+    }
+
+    if (typeof p.defaultModel !== "string") {
+      return { valid: false, error: `Profile "${p.name}" has an invalid 'defaultModel' (must be a string)` };
+    }
+
+    if (typeof p.fastModel !== "string") {
+      return { valid: false, error: `Profile "${p.name}" has an invalid 'fastModel' (must be a string)` };
+    }
+
+    if (typeof p.reasoningModel !== "string") {
+      return { valid: false, error: `Profile "${p.name}" has an invalid 'reasoningModel' (must be a string)` };
+    }
+
+    if (!Array.isArray(p.enabledTargets)) {
+      return { valid: false, error: `Profile "${p.name}" has an invalid 'enabledTargets' (must be an array)` };
+    }
+
+    for (const t of p.enabledTargets) {
+      if (!VALID_TARGET_TYPES.includes(t as Profile["enabledTargets"][number])) {
+        return {
+          valid: false,
+          error: `Profile "${p.name}" has invalid target "${t}" in enabledTargets. Valid values: ${VALID_TARGET_TYPES.join(", ")}`,
+        };
+      }
     }
   }
 

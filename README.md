@@ -4,22 +4,38 @@ Local-first AI profile manager for macOS.
 
 ## Current Status
 
-- Phase 1 / 1.1: Tauri app skeleton + mock UI + profile CRUD ✅
-- Phase 2A: Local profile persistence (localStorage) + data model cleanup ✅
-- Data is persisted via **localStorage** (Tauri FS integration planned for Phase 2B)
-- This app **only manages its own profile data** — it does not modify Claude Code, Hermes, or OpenClaw configurations
-- Real target adapters (Claude Code, Hermes, OpenClaw) are not yet implemented
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 1 / 1.1 | Tauri app skeleton + mock UI + profile CRUD | ✅ Done |
+| 2A | localStorage persistence + data model cleanup | ✅ Done |
+| 2B | Tauri FS integration (`~/.config/agent-env-switcher/`) | 🔲 Planned |
+
+**Important:**
+
+- This app **only manages its own profile data** — it does **not** modify Claude Code, Hermes, or OpenClaw configurations
+- Real target adapters (reading/writing tool config files) are **not yet implemented**
+- All API keys in the app are mock values (`MOCK_API_KEY_*_DO_NOT_USE`)
+- Data is persisted via **localStorage** only; Tauri FS integration is planned for Phase 2B
 
 ## Positioning
 
-Agent Env Switcher is a local-first AI profile manager for switching AI provider and target environment profiles without cloud sync, account systems, telemetry, keychain reads, browser data reads, or system-wide configuration changes by default.
+Agent Env Switcher is a local-first AI profile manager for switching AI provider and target environment profiles.
+
+It does **not** include:
+
+- Cloud sync
+- Account systems
+- Telemetry
+- Keychain reads
+- Browser data reads
+- System-wide configuration changes by default
 
 ## Target Stack
 
-- Tauri
+- Tauri v2
 - React
 - TypeScript
-- shadcn/ui
+- shadcn/ui + Tailwind CSS
 
 ## Getting Started
 
@@ -47,40 +63,54 @@ npm run build
 
 Currently using **localStorage** as the persistence layer:
 
-- Profiles, settings, and backups are saved to `localStorage` automatically
+- Profiles, active profile ID, settings, and backups are saved to `localStorage` automatically
 - Data persists across page refreshes within the same browser/WebView
 - Clearing browser data will reset to example profiles
-- Tauri FS integration (`~/.config/agent-env-switcher/`) is planned for Phase 2B
+- On load failure (corrupted data), the app falls back to default/example data and shows a warning
+
+localStorage keys:
+
+| Key | Content |
+|-----|---------|
+| `agent-env-switcher:profiles` | Profile list |
+| `agent-env-switcher:active-profile-id` | Active profile ID |
+| `agent-env-switcher:settings` | App settings |
+| `agent-env-switcher:backups` | Backup records |
+
+Tauri FS integration (`~/.config/agent-env-switcher/`) is planned for Phase 2B.
 
 ## Provider / Target Model
 
 **Providers** (API endpoints):
-- `deepseek`, `kimi`, `openai`, `openrouter`, `local-gateway`, `openai-compatible`, `gemini-compatible`
+
+| Provider Type | Description |
+|---------------|-------------|
+| `openai-compatible` | Generic OpenAI-compatible endpoint |
+| `deepseek` | DeepSeek API |
+| `kimi` | Moonshot (Kimi) API |
+| `openai` | OpenAI API |
+| `gemini-compatible` | Gemini-compatible endpoint |
+| `local-gateway` | Local LLM gateway |
+| `openrouter` | OpenRouter API |
 
 **Targets** (AI coding tools):
-- `claude-code`, `hermes`, `openclaw`, `openai-compatible-api`
 
-A Profile selects a Provider and enables one or more Targets.
+| Target Type | Description |
+|-------------|-------------|
+| `claude-code` | Anthropic's CLI coding agent |
+| `hermes` | AI coding assistant |
+| `openclaw` | Open-source coding agent |
+| `openai-compatible-api` | Any OpenAI-compatible API endpoint |
 
-## Covered Providers And Targets
-
-- Claude Code
-- Hermes
-- OpenClaw
-- OpenAI-compatible API
-- DeepSeek
-- Kimi
-- OpenAI
-- Gemini-compatible endpoint
-- local LLM Gateway
+A Profile selects a **Provider** and enables one or more **Targets**.
 
 ## MVP Scope
 
 - Multiple local profiles
-- Active profile switching
-- Dry-run preview before changes
-- Backup and restore
-- Script generation
+- Active profile switching (persisted via localStorage)
+- Dry-run preview before changes (mock only)
+- Backup and restore (mock only)
+- Profile import/export (JSON with validation)
 - Target support for the listed providers and tools
 
 ## Safety Principles
@@ -92,7 +122,7 @@ A Profile selects a Provider and enables one or more Targets.
 - No keychain reads
 - No browser data reads
 - No process killing
-- External configuration changes must follow: dry-run, backup, apply
+- External configuration changes must follow: dry-run → backup → apply
 
 ## Explicit Non-Goals
 
