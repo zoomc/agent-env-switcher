@@ -1,7 +1,7 @@
 {
   "productName": "Agent Env Switcher",
   "version": "0.1.0",
-  "identifier": "com.agent-env-switcher.app",
+  "identifier": "com.zoomc.agentenvswitcher",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",

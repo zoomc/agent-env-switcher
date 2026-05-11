@@ -1,6 +1,6 @@
-import type { Profile, Target, DryRunResult, Backup, AppSettings } from "@/types";
+import type { Profile, Target, DryRunResult, Backup, AppSettings, TargetType } from "@/types";
 
-export const mockProfiles: Profile[] = [
+export const initialProfiles: Profile[] = [
   {
     id: "profile-1",
     name: "DeepSeek Coding",
@@ -9,7 +9,7 @@ export const mockProfiles: Profile[] = [
     defaultModel: "deepseek-coder",
     fastModel: "deepseek-chat",
     reasoningModel: "deepseek-reasoner",
-    apiKey: "sk-dsk8a7b9c3d5e2f1g4h6i0j2k4l6m8n0",
+    apiKey: "MOCK-sk-deepseek-xxxx",
     enabledTargets: ["claude-code", "openclaw"],
     lastApplied: "2026-05-10T14:30:00Z",
     healthStatus: "healthy",
@@ -23,7 +23,7 @@ export const mockProfiles: Profile[] = [
     defaultModel: "moonshot-v1-8k",
     fastModel: "moonshot-v1-8k",
     reasoningModel: "moonshot-v1-32k",
-    apiKey: "mk-qw3r5t7y9u1i3o5p7a9s1d3f5g7h9j1",
+    apiKey: "MOCK-mk-kimi-xxxx",
     enabledTargets: ["hermes"],
     lastApplied: "2026-05-09T10:00:00Z",
     healthStatus: "healthy",
@@ -37,7 +37,7 @@ export const mockProfiles: Profile[] = [
     defaultModel: "gpt-4o",
     fastModel: "gpt-4o-mini",
     reasoningModel: "o1",
-    apiKey: "sk-proj-a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+    apiKey: "MOCK-sk-openai-xxxx",
     enabledTargets: ["claude-code", "hermes", "openclaw"],
     lastApplied: "2026-05-08T16:45:00Z",
     healthStatus: "degraded",
@@ -51,7 +51,7 @@ export const mockProfiles: Profile[] = [
     defaultModel: "llama-3.3-70b",
     fastModel: "llama-3.1-8b",
     reasoningModel: "qwq-32b",
-    apiKey: "lg-localdev2026access",
+    apiKey: "MOCK-local-no-key",
     enabledTargets: ["claude-code", "openai-compatible-api"],
     lastApplied: null,
     healthStatus: "offline",
@@ -65,7 +65,7 @@ export const mockProfiles: Profile[] = [
     defaultModel: "anthropic/claude-sonnet-4",
     fastModel: "google/gemini-2.0-flash",
     reasoningModel: "openai/o3",
-    apiKey: "sk-or-v1-9z8x7c6v5b4n3m2l1k0j9h8g7f6d5s4a",
+    apiKey: "MOCK-sk-openrouter-xxxx",
     enabledTargets: ["claude-code", "deepseek"],
     lastApplied: "2026-05-07T09:15:00Z",
     healthStatus: "healthy",
@@ -148,44 +148,7 @@ export const mockTargets: Target[] = [
   },
 ];
 
-export const mockDryRunResults: DryRunResult[] = [
-  {
-    id: "dryrun-1",
-    profileId: "profile-1",
-    profileName: "DeepSeek Coding",
-    targetType: "claude-code",
-    targetName: "Claude Code",
-    timestamp: "2026-05-10T14:30:00Z",
-    changes: [
-      {
-        file: "~/.claude/config.json",
-        action: "modify",
-        before: '{\n  "model": "gpt-4o",\n  "api_key": "sk-old..."\n}',
-        after: '{\n  "model": "deepseek-coder",\n  "api_key": "sk-dsk..."\n}',
-      },
-    ],
-    status: "ready",
-  },
-  {
-    id: "dryrun-2",
-    profileId: "profile-1",
-    profileName: "DeepSeek Coding",
-    targetType: "openclaw",
-    targetName: "OpenClaw",
-    timestamp: "2026-05-10T14:30:00Z",
-    changes: [
-      {
-        file: "~/.openclaw/settings.json",
-        action: "modify",
-        before: '{\n  "provider": "openai",\n  "model": "gpt-4o"\n}',
-        after: '{\n  "provider": "deepseek",\n  "model": "deepseek-coder"\n}',
-      },
-    ],
-    status: "ready",
-  },
-];
-
-export const mockBackups: Backup[] = [
+export const initialBackups: Backup[] = [
   {
     id: "backup-1",
     profileId: "profile-3",
@@ -215,7 +178,7 @@ export const mockBackups: Backup[] = [
   },
 ];
 
-export const mockSettings: AppSettings = {
+export const initialSettings: AppSettings = {
   theme: "dark",
   defaultProfileId: "profile-1",
   confirmBeforeApply: true,
@@ -223,3 +186,35 @@ export const mockSettings: AppSettings = {
   backupRetentionDays: 30,
   advancedMode: false,
 };
+
+const targetConfigPaths: Record<TargetType, string> = {
+  "claude-code": "~/.claude/config.json",
+  "hermes": "~/.hermes/config.yaml",
+  "openclaw": "~/.openclaw/settings.json",
+  "openai-compatible-api": "Environment variables",
+  "deepseek": "Environment variables",
+  "kimi": "Environment variables",
+  "openai": "Environment variables",
+  "gemini-compatible": "Environment variables",
+  "local-gateway": "Custom configuration",
+};
+
+export function generateDryRunPreview(profile: Profile): DryRunResult[] {
+  return profile.enabledTargets.map((targetType, idx) => ({
+    id: `dryrun-${profile.id}-${idx}`,
+    profileId: profile.id,
+    profileName: profile.name,
+    targetType,
+    targetName: mockTargets.find((t) => t.type === targetType)?.name ?? targetType,
+    timestamp: new Date().toISOString(),
+    changes: [
+      {
+        file: targetConfigPaths[targetType] ?? "Unknown",
+        action: "modify" as const,
+        before: `{\n  "provider": "previous",\n  "model": "previous-model"\n}`,
+        after: `{\n  "provider": "${profile.providerType}",\n  "model": "${profile.defaultModel}"\n}`,
+      },
+    ],
+    status: "ready" as const,
+  }));
+}

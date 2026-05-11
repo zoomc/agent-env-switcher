@@ -2,6 +2,10 @@
 
 Local-first AI profile manager for macOS.
 
+## Current Status
+
+Phase 1 complete: Tauri app skeleton with mock UI. All data is mock — no real system configuration is read or modified.
+
 ## Positioning
 
 Agent Env Switcher is a local-first AI profile manager for switching AI provider and target environment profiles without cloud sync, account systems, telemetry, keychain reads, browser data reads, or system-wide configuration changes by default.
@@ -13,7 +17,27 @@ Agent Env Switcher is a local-first AI profile manager for switching AI provider
 - TypeScript
 - shadcn/ui
 
-This repository is initialized as a project skeleton and specification package only. It does not contain the application implementation yet.
+## Getting Started
+
+```bash
+# Install dependencies
+npm install
+
+# Start Vite dev server (frontend only)
+npm run dev
+
+# Start Tauri desktop app (requires Rust toolchain + system libs)
+npm run tauri dev
+
+# Build for production
+npm run build
+```
+
+### System Requirements for Tauri
+
+- Rust toolchain (`rustup`)
+- macOS: Xcode Command Line Tools
+- Linux: `libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf`
 
 ## Covered Providers And Targets
 

@@ -7,18 +7,21 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { mockTargets, mockProfiles } from "@/data/mock";
+import { mockTargets } from "@/data/mock";
+import { useApp } from "@/store/AppContext";
 import {
   CheckCircle2,
   XCircle,
   FolderOpen,
   ExternalLink,
 } from "lucide-react";
+import type { TargetType } from "@/types";
 
 export function Targets() {
-  const getProfileCountForTarget = (targetType: string) =>
-    mockProfiles.filter((p) => p.enabledTargets.includes(targetType as never))
-      .length;
+  const { profiles } = useApp();
+
+  const getProfileCountForTarget = (targetType: TargetType) =>
+    profiles.filter((p) => p.enabledTargets.includes(targetType)).length;
 
   return (
     <div className="space-y-6">
@@ -33,9 +36,7 @@ export function Targets() {
         {mockTargets.map((target) => (
           <Card
             key={target.id}
-            className={
-              !target.isAvailable ? "opacity-60" : undefined
-            }
+            className={!target.isAvailable ? "opacity-60" : undefined}
           >
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -56,11 +57,8 @@ export function Targets() {
                     {target.configPath}
                   </span>
                 </div>
-
                 <div className="flex items-center justify-between">
-                  <Badge
-                    variant={target.isAvailable ? "default" : "destructive"}
-                  >
+                  <Badge variant={target.isAvailable ? "default" : "destructive"}>
                     {target.isAvailable ? "Available" : "Unavailable"}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
@@ -68,13 +66,7 @@ export function Targets() {
                     {getProfileCountForTarget(target.type) !== 1 ? "s" : ""}
                   </span>
                 </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  disabled
-                >
+                <Button variant="outline" size="sm" className="w-full" disabled>
                   <ExternalLink className="mr-1 h-3 w-3" />
                   Configure
                 </Button>
