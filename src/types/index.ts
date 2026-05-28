@@ -7,7 +7,7 @@ export type ProviderType =
   | 'local-gateway'
   | 'openrouter';
 
-export type TargetType = 'claude-code' | 'hermes' | 'openclaw' | 'openai-compatible-api';
+export type TargetType = 'claude-code' | 'hermes' | 'codex' | 'openclaw' | 'openai-compatible-api';
 
 export const VALID_PROVIDER_TYPES: readonly ProviderType[] = [
   'openai-compatible',
@@ -22,11 +22,17 @@ export const VALID_PROVIDER_TYPES: readonly ProviderType[] = [
 export const VALID_TARGET_TYPES: readonly TargetType[] = [
   'claude-code',
   'hermes',
+  'codex',
   'openclaw',
   'openai-compatible-api',
 ];
 
-export const RESTORE_SUPPORTED_TARGETS: readonly TargetType[] = ['claude-code', 'openclaw'];
+export const RESTORE_SUPPORTED_TARGETS: readonly TargetType[] = [
+  'claude-code',
+  'openclaw',
+  'hermes',
+  'codex',
+];
 
 export type HealthStatus = 'healthy' | 'warning' | 'broken' | 'unknown';
 
@@ -99,4 +105,48 @@ export interface ExportData {
   version: 1;
   exportedAt: string;
   profiles: Profile[];
+}
+
+export interface TargetProfile {
+  id: string;
+  targetType: TargetType;
+  name: string;
+  providerType: ProviderType;
+  baseUrl: string;
+  defaultModel: string;
+  fastModel: string;
+  reasoningModel: string;
+  apiKey: string;
+  isActive: boolean;
+  lastApplied: string | null;
+  healthStatus: HealthStatus;
+}
+
+export interface TargetProfileStore {
+  profiles: Record<TargetType, TargetProfile[]>;
+}
+
+export const TARGET_CONFIG_PATHS: Record<TargetType, string> = {
+  'claude-code': '~/.claude/settings.json',
+  hermes: '~/.hermes/config.yaml',
+  codex: '~/.codex/config.toml',
+  openclaw: '~/.openclaw/settings.json',
+  'openai-compatible-api': 'Environment variables',
+};
+
+export const TARGET_LABELS: Record<TargetType, string> = {
+  'claude-code': 'Claude Code',
+  hermes: 'Hermes',
+  codex: 'Codex',
+  openclaw: 'OpenClaw',
+  'openai-compatible-api': 'OpenAI-Compatible API',
+};
+
+export interface FreeModel {
+  id: string;
+  modelId: string;
+  name: string;
+  contextLength: number;
+  modality: string;
+  pricing: { prompt: string; completion: string };
 }

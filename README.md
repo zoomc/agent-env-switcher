@@ -89,6 +89,14 @@ npm run build
 - macOS: Xcode Command Line Tools
 - Linux: `libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf`
 
+### DMG Bundling (macOS)
+
+DMG packaging requires `create-dmg`. If `npx tauri build` fails at the DMG step:
+
+```bash
+brew install create-dmg
+```
+
 ## Provider / Target Model
 
 **Providers** (API endpoints):

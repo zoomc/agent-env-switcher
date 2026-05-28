@@ -1,5 +1,13 @@
-import type { Profile, Target, DryRunResult, BackupRecord, AppSettings, TargetType } from '@/types';
-import { RESTORE_SUPPORTED_TARGETS } from '@/types';
+import type {
+  Profile,
+  Target,
+  DryRunResult,
+  BackupRecord,
+  AppSettings,
+  TargetType,
+  TargetProfile,
+  FreeModel,
+} from '@/types';
 
 export const exampleProfiles: Profile[] = [
   {
@@ -79,28 +87,36 @@ export const knownTargets: Target[] = [
     id: 'target-1',
     type: 'claude-code',
     name: 'Claude Code',
-    description: "Anthropic's CLI coding agent",
-    configPath: '~/.claude/config.json',
+    description: "Anthropic's CLI coding agent — env var driven",
+    configPath: '~/.claude/settings.json',
     isAvailable: true,
   },
   {
     id: 'target-2',
     type: 'hermes',
     name: 'Hermes',
-    description: 'AI coding assistant',
+    description: 'AI coding assistant — YAML config',
     configPath: '~/.hermes/config.yaml',
     isAvailable: true,
   },
   {
     id: 'target-3',
-    type: 'openclaw',
-    name: 'OpenClaw',
-    description: 'Open-source coding agent',
-    configPath: '~/.openclaw/settings.json',
-    isAvailable: false,
+    type: 'codex',
+    name: 'Codex',
+    description: 'OpenAI coding agent — TOML config',
+    configPath: '~/.codex/config.toml',
+    isAvailable: true,
   },
   {
     id: 'target-4',
+    type: 'openclaw',
+    name: 'OpenClaw',
+    description: 'Open-source coding agent — JSON config',
+    configPath: '~/.openclaw/settings.json',
+    isAvailable: true,
+  },
+  {
+    id: 'target-5',
     type: 'openai-compatible-api',
     name: 'OpenAI-Compatible API',
     description: 'Any OpenAI-compatible API endpoint',
@@ -108,6 +124,102 @@ export const knownTargets: Target[] = [
     isAvailable: true,
   },
 ];
+
+export const exampleTargetProfiles: Record<TargetType, TargetProfile[]> = {
+  'claude-code': [
+    {
+      id: 'tp-cc-1',
+      targetType: 'claude-code',
+      name: 'DeepSeek for Claude Code',
+      providerType: 'deepseek',
+      baseUrl: 'https://api.deepseek.com/v1',
+      defaultModel: 'deepseek-coder',
+      fastModel: 'deepseek-chat',
+      reasoningModel: 'deepseek-reasoner',
+      apiKey: 'MOCK_DEEPSEEK_KEY_CC_DO_NOT_USE',
+      isActive: true,
+      lastApplied: '2026-05-10T14:30:00Z',
+      healthStatus: 'healthy',
+    },
+    {
+      id: 'tp-cc-2',
+      targetType: 'claude-code',
+      name: 'OpenAI for Claude Code',
+      providerType: 'openai',
+      baseUrl: 'https://api.openai.com/v1',
+      defaultModel: 'gpt-4o',
+      fastModel: 'gpt-4o-mini',
+      reasoningModel: 'o1',
+      apiKey: 'MOCK_OPENAI_KEY_CC_DO_NOT_USE',
+      isActive: false,
+      lastApplied: null,
+      healthStatus: 'unknown',
+    },
+  ],
+  hermes: [
+    {
+      id: 'tp-hermes-1',
+      targetType: 'hermes',
+      name: 'Kimi for Hermes',
+      providerType: 'kimi',
+      baseUrl: 'https://api.moonshot.cn/v1',
+      defaultModel: 'moonshot-v1-8k',
+      fastModel: 'moonshot-v1-8k',
+      reasoningModel: 'moonshot-v1-32k',
+      apiKey: 'MOCK_KIMI_KEY_HERMES_DO_NOT_USE',
+      isActive: true,
+      lastApplied: '2026-05-09T10:00:00Z',
+      healthStatus: 'healthy',
+    },
+    {
+      id: 'tp-hermes-2',
+      targetType: 'hermes',
+      name: 'OpenRouter for Hermes',
+      providerType: 'openrouter',
+      baseUrl: 'https://openrouter.ai/api/v1',
+      defaultModel: 'anthropic/claude-sonnet-4',
+      fastModel: 'google/gemini-2.0-flash',
+      reasoningModel: 'openai/o3',
+      apiKey: 'MOCK_OPENROUTER_KEY_HERMES_DO_NOT_USE',
+      isActive: false,
+      lastApplied: null,
+      healthStatus: 'unknown',
+    },
+  ],
+  codex: [
+    {
+      id: 'tp-codex-1',
+      targetType: 'codex',
+      name: 'OpenAI for Codex',
+      providerType: 'openai',
+      baseUrl: 'https://api.openai.com/v1',
+      defaultModel: 'gpt-5.5',
+      fastModel: 'gpt-4o-mini',
+      reasoningModel: 'o3',
+      apiKey: 'MOCK_OPENAI_KEY_CODEX_DO_NOT_USE',
+      isActive: true,
+      lastApplied: '2026-05-08T16:45:00Z',
+      healthStatus: 'healthy',
+    },
+  ],
+  openclaw: [
+    {
+      id: 'tp-oc-1',
+      targetType: 'openclaw',
+      name: 'DeepSeek for OpenClaw',
+      providerType: 'deepseek',
+      baseUrl: 'https://api.deepseek.com/v1',
+      defaultModel: 'deepseek-coder',
+      fastModel: 'deepseek-chat',
+      reasoningModel: 'deepseek-reasoner',
+      apiKey: 'MOCK_DEEPSEEK_KEY_OC_DO_NOT_USE',
+      isActive: true,
+      lastApplied: '2026-05-10T14:30:00Z',
+      healthStatus: 'healthy',
+    },
+  ],
+  'openai-compatible-api': [],
+};
 
 export const exampleBackups: BackupRecord[] = [
   {
@@ -139,20 +251,6 @@ export const exampleBackups: BackupRecord[] = [
     checksum: 'f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5',
   },
   {
-    id: 'backup-claude-code-1746893400000',
-    targetType: 'claude-code',
-    targetName: 'Claude Code',
-    profileId: 'profile-1',
-    profileName: 'DeepSeek Coding',
-    createdAt: '2026-05-10T14:30:00Z',
-    originalConfigPath: '.claude/config.json',
-    backupFilePath:
-      '~/Library/Application Support/com.agent-env-switcher/app/agent-env-switcher/backups/claude-code-2026-05-10T14-30-00-000Z.bak',
-    backupFileSize: 480,
-    restoreSupported: true,
-    checksum: '1a2b3c4d5e6f1a2b3c4d5e6f1a2b3c4d5e6f1a2b3c4d5e6f1a2b3c4d5e6f1a2b',
-  },
-  {
     id: 'backup-hermes-1746889800000',
     targetType: 'hermes',
     targetName: 'Hermes',
@@ -163,7 +261,7 @@ export const exampleBackups: BackupRecord[] = [
     backupFilePath:
       '~/Library/Application Support/com.agent-env-switcher/app/agent-env-switcher/backups/hermes-2026-05-07T09-15-00-000Z.bak',
     backupFileSize: 256,
-    restoreSupported: false,
+    restoreSupported: true,
     checksum: 'abcdef123456abcdef123456abcdef123456abcdef123456abcdef123456abcd',
   },
 ];
@@ -177,9 +275,61 @@ export const defaultSettings: AppSettings = {
   advancedMode: false,
 };
 
+export const exampleFreeModels: FreeModel[] = [
+  {
+    id: 'fm-1',
+    modelId: 'meta-llama/llama-3.3-70b-instruct:free',
+    name: 'Meta Llama 3.3 70B Instruct (free)',
+    contextLength: 131072,
+    modality: 'text',
+    pricing: { prompt: '0', completion: '0' },
+  },
+  {
+    id: 'fm-2',
+    modelId: 'google/gemma-3-27b-it:free',
+    name: 'Google Gemma 3 27B IT (free)',
+    contextLength: 131072,
+    modality: 'text',
+    pricing: { prompt: '0', completion: '0' },
+  },
+  {
+    id: 'fm-3',
+    modelId: 'qwen/qwen3-235b-a22b:free',
+    name: 'Qwen3 235B A22B (free)',
+    contextLength: 40960,
+    modality: 'text',
+    pricing: { prompt: '0', completion: '0' },
+  },
+  {
+    id: 'fm-4',
+    modelId: 'deepseek/deepseek-chat-v3-0324:free',
+    name: 'DeepSeek Chat V3 0324 (free)',
+    contextLength: 131072,
+    modality: 'text',
+    pricing: { prompt: '0', completion: '0' },
+  },
+  {
+    id: 'fm-5',
+    modelId: 'microsoft/phi-4-reasoning-plus:free',
+    name: 'Microsoft Phi-4 Reasoning Plus (free)',
+    contextLength: 32768,
+    modality: 'text',
+    pricing: { prompt: '0', completion: '0' },
+  },
+  {
+    id: 'fm-6',
+    modelId: 'nousresearch/deephermes-3-llama-3-8b-preview:free',
+    name: 'Nous DeepHermes 3 Llama 3 8B (free)',
+    contextLength: 131072,
+    modality: 'text',
+    pricing: { prompt: '0', completion: '0' },
+  },
+];
+
 const targetConfigPaths: Record<TargetType, string> = {
-  'claude-code': '~/.claude/config.json',
+  'claude-code': '~/.claude/settings.json',
   hermes: '~/.hermes/config.yaml',
+  codex: '~/.codex/config.toml',
   openclaw: '~/.openclaw/settings.json',
   'openai-compatible-api': 'Environment variables',
 };

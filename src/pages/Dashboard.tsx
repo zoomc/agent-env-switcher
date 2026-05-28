@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { maskApiKey } from '@/lib/mask';
 import { useApp } from '@/store/AppContext';
-import { knownTargets } from '@/data/mock';
 import {
   Activity,
   ArrowRight,
@@ -14,30 +13,55 @@ import {
   XCircle,
   HelpCircle,
   Shield,
-  Archive,
-  UserCircle,
-  Info,
+  Bot,
+  Terminal,
+  Box,
+  Bug,
 } from 'lucide-react';
-import type { HealthStatus } from '@/types';
+import type { HealthStatus, TargetType } from '@/types';
+import { TARGET_LABELS } from '@/types';
 
 const healthIcons: Record<HealthStatus, React.ReactNode> = {
   healthy: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
-  degraded: <AlertTriangle className="h-4 w-4 text-amber-500" />,
-  offline: <XCircle className="h-4 w-4 text-red-500" />,
+  warning: <AlertTriangle className="h-4 w-4 text-amber-500" />,
+  broken: <XCircle className="h-4 w-4 text-red-500" />,
   unknown: <HelpCircle className="h-4 w-4 text-muted-foreground" />,
 };
 
 const healthLabels: Record<HealthStatus, string> = {
   healthy: 'Healthy',
-  degraded: 'Degraded',
-  offline: 'Offline',
+  warning: 'Warning',
+  broken: 'Broken',
   unknown: 'Unknown',
 };
 
+function getTargetIcon(targetType: TargetType): React.ReactNode {
+  switch (targetType) {
+    case 'hermes':
+      return <Bot className="h-4 w-4" />;
+    case 'claude-code':
+      return <Terminal className="h-4 w-4" />;
+    case 'codex':
+      return <Box className="h-4 w-4" />;
+    case 'openclaw':
+      return <Bug className="h-4 w-4" />;
+    case 'openai-compatible-api':
+      return <Shield className="h-4 w-4" />;
+  }
+}
+
+const targetRoutes: Partial<Record<TargetType, string>> = {
+  hermes: '/hermes',
+  'claude-code': '/claude-code',
+  codex: '/codex',
+  openclaw: '/openclaw',
+};
+
 export function Dashboard() {
-  const { profiles, backups, switchProfile, activeProfile, loadError } = useApp();
+  const { profiles, backups, switchProfile, activeProfile, loadError, targetProfiles } = useApp();
   const navigate = useNavigate();
-  const availableTargets = knownTargets.filter((t) => t.isAvailable).length;
+
+  const targetTabs: TargetType[] = ['hermes', 'claude-code', 'codex', 'openclaw'];
 
   return (
     <div className="space-y-6">
@@ -55,49 +79,33 @@ export function Dashboard() {
         </div>
       )}
 
-      <div className="flex items-center gap-2 rounded-md border border-blue-500/30 bg-blue-500/10 p-3">
-        <Info className="h-4 w-4 text-blue-400" />
-        <span className="text-xs text-blue-200">
-          This app only manages its own profile data. It does not modify Claude Code, Hermes, or
-          OpenClaw configurations.
-        </span>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Profile</CardTitle>
-            <UserCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{activeProfile?.name ?? 'None'}</div>
-            <p className="text-xs text-muted-foreground">
-              {activeProfile?.providerType ?? 'No profile active'}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Available Targets</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">
-              {availableTargets}/{knownTargets.length}
-            </div>
-            <p className="text-xs text-muted-foreground">Targets ready for configuration</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Backups</CardTitle>
-            <Archive className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{backups.length}</div>
-            <p className="text-xs text-muted-foreground">Configuration snapshots stored</p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-4">
+        {targetTabs.map((targetType) => {
+          const targetProfileList = targetProfiles[targetType] || [];
+          const activeTargetProfile = targetProfileList.find((p) => p.isActive);
+          return (
+            <Card
+              key={targetType}
+              className="cursor-pointer hover:bg-accent/50 transition-colors"
+              onClick={() => navigate(targetRoutes[targetType] || '/')}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {TARGET_LABELS[targetType]}
+                </CardTitle>
+                {getTargetIcon(targetType)}
+              </CardHeader>
+              <CardContent>
+                <div className="text-lg font-bold">
+                  {activeTargetProfile?.name ?? 'None'}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {targetProfileList.length} profile{targetProfileList.length !== 1 ? 's' : ''}
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {activeProfile && (
@@ -105,8 +113,8 @@ export function Dashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">Current: {activeProfile.name}</CardTitle>
-                <CardDescription>Active profile configuration overview</CardDescription>
+                <CardTitle className="text-lg">Active Profile: {activeProfile.name}</CardTitle>
+                <CardDescription>Active profile from unified profile list</CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 {healthIcons[activeProfile.healthStatus]}
@@ -114,7 +122,7 @@ export function Dashboard() {
                   variant={
                     activeProfile.healthStatus === 'healthy'
                       ? 'default'
-                      : activeProfile.healthStatus === 'degraded'
+                      : activeProfile.healthStatus === 'warning'
                         ? 'secondary'
                         : 'destructive'
                   }
@@ -180,10 +188,45 @@ export function Dashboard() {
         </Card>
       )}
 
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Backups</CardTitle>
+            <CardDescription>Configuration snapshots stored</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{backups.length}</div>
+            <Button
+              variant="link"
+              className="mt-2 p-0 h-auto text-sm"
+              onClick={() => navigate('/backups')}
+            >
+              View Backups <ArrowRight className="ml-1 h-3 w-3" />
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Unified Profiles</CardTitle>
+            <CardDescription>Profile management</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{profiles.length}</div>
+            <Button
+              variant="link"
+              className="mt-2 p-0 h-auto text-sm"
+              onClick={() => navigate('/profiles')}
+            >
+              Manage Profiles <ArrowRight className="ml-1 h-3 w-3" />
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Profile Health</CardTitle>
-          <CardDescription>Status of all configured profiles</CardDescription>
+          <CardDescription>Status of all unified profiles</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -217,19 +260,12 @@ export function Dashboard() {
         </CardContent>
       </Card>
 
-      <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
-        <Activity className="h-4 w-4 text-amber-500" />
-        <span className="text-xs text-amber-200">
-          Data is persisted via localStorage. No external tool configurations are modified.
+      <div className="flex items-center gap-2 rounded-md border border-blue-500/30 bg-blue-500/10 p-3">
+        <Activity className="h-4 w-4 text-blue-400" />
+        <span className="text-xs text-blue-200">
+          Per-target profiles let you manage each AI tool independently. Unified profiles remain
+          for backward compatibility.
         </span>
-        <Button
-          variant="link"
-          size="sm"
-          className="ml-auto text-amber-300"
-          onClick={() => navigate('/profiles')}
-        >
-          Manage Profiles →
-        </Button>
       </div>
     </div>
   );

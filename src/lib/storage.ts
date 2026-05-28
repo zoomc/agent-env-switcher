@@ -1,6 +1,19 @@
-import type { Profile, BackupRecord, AppSettings, ExportData } from '@/types';
+import type {
+  Profile,
+  BackupRecord,
+  AppSettings,
+  ExportData,
+  TargetProfile,
+  TargetProfileStore,
+  TargetType,
+} from '@/types';
 import { VALID_PROVIDER_TYPES, VALID_TARGET_TYPES } from '@/types';
-import { exampleProfiles, exampleBackups, defaultSettings } from '@/data/mock';
+import {
+  exampleProfiles,
+  exampleBackups,
+  defaultSettings,
+  exampleTargetProfiles,
+} from '@/data/mock';
 
 const KEYS = {
   profiles: 'agent-env-switcher:profiles',
@@ -212,4 +225,100 @@ export function parseImport(jsonString: string): Profile[] {
     id: p.id || `profile-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     isActive: false,
   }));
+}
+
+const TARGET_PROFILES_KEY = 'agent-env-switcher:target-profiles';
+
+function getDefaultTargetProfiles(): TargetProfileStore {
+  return { profiles: { ...exampleTargetProfiles } };
+}
+
+export function loadTargetProfiles(): TargetProfileStore {
+  const raw = localStorage.getItem(TARGET_PROFILES_KEY);
+  if (!raw) return getDefaultTargetProfiles();
+  const parsed = safeParse<TargetProfileStore>(raw, getDefaultTargetProfiles());
+  if (!parsed.profiles) return getDefaultTargetProfiles();
+  return parsed;
+}
+
+export function saveTargetProfiles(store: TargetProfileStore): void {
+  try {
+    localStorage.setItem(TARGET_PROFILES_KEY, JSON.stringify(store));
+  } catch (e) {
+    console.error('Failed to save target profiles to localStorage:', e);
+  }
+}
+
+export function getTargetProfiles(
+  store: TargetProfileStore,
+  targetType: TargetType
+): TargetProfile[] {
+  return store.profiles[targetType] || [];
+}
+
+export function getActiveTargetProfile(
+  store: TargetProfileStore,
+  targetType: TargetType
+): TargetProfile | undefined {
+  const profiles = store.profiles[targetType] || [];
+  return profiles.find((p) => p.isActive);
+}
+
+export function addTargetProfile(
+  store: TargetProfileStore,
+  profile: TargetProfile
+): TargetProfileStore {
+  const existing = store.profiles[profile.targetType] || [];
+  return {
+    profiles: {
+      ...store.profiles,
+      [profile.targetType]: [...existing, profile],
+    },
+  };
+}
+
+export function updateTargetProfile(
+  store: TargetProfileStore,
+  targetType: TargetType,
+  profileId: string,
+  updates: Partial<TargetProfile>
+): TargetProfileStore {
+  const existing = store.profiles[targetType] || [];
+  return {
+    profiles: {
+      ...store.profiles,
+      [targetType]: existing.map((p) => (p.id === profileId ? { ...p, ...updates } : p)),
+    },
+  };
+}
+
+export function deleteTargetProfile(
+  store: TargetProfileStore,
+  targetType: TargetType,
+  profileId: string
+): TargetProfileStore {
+  const existing = store.profiles[targetType] || [];
+  return {
+    profiles: {
+      ...store.profiles,
+      [targetType]: existing.filter((p) => p.id !== profileId),
+    },
+  };
+}
+
+export function switchActiveTargetProfile(
+  store: TargetProfileStore,
+  targetType: TargetType,
+  profileId: string
+): TargetProfileStore {
+  const existing = store.profiles[targetType] || [];
+  return {
+    profiles: {
+      ...store.profiles,
+      [targetType]: existing.map((p) => ({
+        ...p,
+        isActive: p.id === profileId,
+      })),
+    },
+  };
 }

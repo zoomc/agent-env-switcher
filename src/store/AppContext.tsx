@@ -14,12 +14,16 @@ import type {
   DryRunResult,
   DryRunChange,
   HealthStatus,
+  TargetProfile,
+  TargetProfileStore,
+  TargetType,
 } from '@/types';
 import * as tauriStorage from '@/lib/tauriStorage';
 import * as localStorage from '@/lib/storage';
 import {
   generateDryRun as generateRealDryRun,
   applyProfile,
+  applyTargetProfile as doApplyTargetProfile,
   restoreBackup as doRestoreBackup,
   previewRestore as doPreviewRestore,
   checkProfileHealth,
@@ -69,6 +73,12 @@ interface AppContextValue {
     preRestoreBackup?: BackupRecord;
   }>;
   refreshHealth: (profileId: string) => Promise<void>;
+  targetProfiles: Record<TargetType, TargetProfile[]>;
+  addTargetProfile: (targetType: TargetType, profile: Omit<TargetProfile, 'id' | 'targetType' | 'isActive' | 'lastApplied' | 'healthStatus'>) => void;
+  updateTargetProfile: (targetType: TargetType, profileId: string, updates: Partial<TargetProfile>) => void;
+  deleteTargetProfile: (targetType: TargetType, profileId: string) => void;
+  switchActiveTargetProfile: (targetType: TargetType, profileId: string) => void;
+  applyTargetProfileChanges: (profile: TargetProfile) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -79,6 +89,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [backups, setBackups] = useState<BackupRecord[]>([]);
   const [settings, setSettings] = useState<AppSettings>(localStorage.loadSettings());
+  const [targetProfileStore, setTargetProfileStore] = useState<TargetProfileStore>(
+    localStorage.loadTargetProfiles()
+  );
 
   const [dryRunResults, setDryRunResults] = useState<DryRunResult[]>([]);
   const [isApplying, setIsApplying] = useState(false);
@@ -92,6 +105,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   backupsRef.current = backups;
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
+  const targetProfilesRef = useRef(targetProfileStore);
+  targetProfilesRef.current = targetProfileStore;
 
   useEffect(() => {
     let cancelled = false;
@@ -212,6 +227,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       localStorage.saveBackups(backups);
     }
   }, [backups, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      localStorage.saveTargetProfiles(targetProfileStore);
+    }
+  }, [targetProfileStore, isLoading]);
 
   const switchProfile = useCallback((id: string) => {
     setProfiles((prev) =>
@@ -409,6 +430,70 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, []);
 
+  const targetProfiles = targetProfileStore.profiles;
+
+  const addTargetProfile = useCallback(
+    (
+      targetType: TargetType,
+      profile: Omit<TargetProfile, 'id' | 'targetType' | 'isActive' | 'lastApplied' | 'healthStatus'>
+    ) => {
+      const id = `tp-${targetType}-${Date.now()}`;
+      const newProfile: TargetProfile = {
+        ...profile,
+        id,
+        targetType,
+        isActive: false,
+        lastApplied: null,
+        healthStatus: 'unknown',
+      };
+      setTargetProfileStore((prev) => localStorage.addTargetProfile(prev, newProfile));
+    },
+    []
+  );
+
+  const updateTargetProfile = useCallback(
+    (targetType: TargetType, profileId: string, updates: Partial<TargetProfile>) => {
+      setTargetProfileStore((prev) =>
+        localStorage.updateTargetProfile(prev, targetType, profileId, updates)
+      );
+    },
+    []
+  );
+
+  const deleteTargetProfile = useCallback((targetType: TargetType, profileId: string) => {
+    setTargetProfileStore((prev) =>
+      localStorage.deleteTargetProfile(prev, targetType, profileId)
+    );
+  }, []);
+
+  const switchActiveTargetProfile = useCallback(
+    (targetType: TargetType, profileId: string) => {
+      setTargetProfileStore((prev) =>
+        localStorage.switchActiveTargetProfile(prev, targetType, profileId)
+      );
+    },
+    []
+  );
+
+  const applyTargetProfileChanges = useCallback(
+    async (profile: TargetProfile): Promise<{ success: boolean; error?: string }> => {
+      const result = await doApplyTargetProfile(profile);
+      if (result.success) {
+        setTargetProfileStore((prev) =>
+          localStorage.updateTargetProfile(prev, profile.targetType, profile.id, {
+            lastApplied: new Date().toISOString(),
+            healthStatus: 'healthy',
+          })
+        );
+        if (result.backupRecord) {
+          setBackups((prev) => [result.backupRecord!, ...prev]);
+        }
+      }
+      return result;
+    },
+    []
+  );
+
   return (
     <AppContext.Provider
       value={{
@@ -439,6 +524,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         previewRestore: previewRestoreFn,
         restoreBackup: restoreBackupFn,
         refreshHealth,
+        targetProfiles,
+        addTargetProfile,
+        updateTargetProfile,
+        deleteTargetProfile,
+        switchActiveTargetProfile,
+        applyTargetProfileChanges,
       }}
     >
       {children}

@@ -1,11 +1,12 @@
 export function maskApiKey(apiKey: string): string {
-  if (!apiKey || apiKey.length <= 5) {
-    return '••••••';
+  if (!apiKey) return '';
+  if (apiKey.length <= 8) {
+    return '*'.repeat(apiKey.length);
   }
-  const prefix = apiKey.slice(0, 3);
-  const suffix = apiKey.slice(-2);
-  const middleLength = Math.min(apiKey.length - 5, 8);
-  const middle = '•'.repeat(middleLength);
+  const prefix = apiKey.slice(0, 5);
+  const suffix = apiKey.slice(-3);
+  const middleLength = apiKey.length - 8;
+  const middle = '*'.repeat(Math.min(middleLength, 12));
   return `${prefix}${middle}${suffix}`;
 }
 
@@ -15,6 +16,7 @@ const SENSITIVE_KEY_PATTERNS = [
   /^"?API_KEY"?$/,
   /^"?OPENAI_API_KEY"?$/,
   /^"?ANTHROPIC_API_KEY"?$/,
+  /^"?ANTHROPIC_AUTH_TOKEN"?$/,
   /^"?Authorization"?$/i,
 ];
 
@@ -70,7 +72,7 @@ function redactJsonLines(content: string): string {
     .split('\n')
     .map((line) => {
       const kvMatch = line.match(
-        /^(\s*"(?:apiKey|api_key|API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|Authorization)"\s*:\s*")(.+)"(,?\s*)$/i
+        /^(\s*"(?:apiKey|api_key|API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|ANTHROPIC_AUTH_TOKEN|Authorization)"\s*:\s*")(.+)"(,?\s*)$/i
       );
       if (kvMatch) {
         const val = kvMatch[2];
@@ -79,7 +81,9 @@ function redactJsonLines(content: string): string {
         }
         return `${kvMatch[1]}${redactValue(val)}"${kvMatch[3]}`;
       }
-      const bearerMatch = line.match(/^(\s*"(?:Authorization)"\s*:\s*"Bearer\s+)(.+)"(,?\s*)$/i);
+      const bearerMatch = line.match(
+        /^(\s*"(?:Authorization)"\s*:\s*"Bearer\s+)(.+)"(,?\s*)$/i
+      );
       if (bearerMatch) {
         return `${bearerMatch[1]}${redactValue(bearerMatch[2])}"${bearerMatch[3]}`;
       }
