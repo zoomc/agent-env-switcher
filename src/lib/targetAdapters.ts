@@ -794,6 +794,62 @@ export async function checkTargetHealth(targetType: TargetType): Promise<HealthS
   }
 }
 
+export async function readDefaultModel(targetType: TargetType): Promise<string | null> {
+  const content = await readRawConfig(targetType);
+  if (!content) return null;
+
+  if (targetType === 'hermes') {
+    const parsed = parseHermesYaml(content);
+    const model = parsed.model as Record<string, unknown> | undefined;
+    return (model?.default as string) ?? null;
+  }
+
+  if (targetType === 'openclaw') {
+    try {
+      const parsed = JSON.parse(content);
+      return parsed.model ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+export async function writeDefaultModel(targetType: TargetType, model: string): Promise<void> {
+  const currentContent = await readRawConfig(targetType);
+  let content: string;
+
+  if (targetType === 'hermes') {
+    let existing: Record<string, unknown> = {};
+    if (currentContent?.trim()) {
+      existing = parseHermesYaml(currentContent);
+    }
+    const m = (existing.model as Record<string, unknown>) || {};
+    m.default = model;
+    existing.model = m;
+    content = mergeHermesYaml(existing, {
+      providerType: (m.provider as string) || 'openai-compatible',
+      baseUrl: (m.base_url as string) || '',
+      defaultModel: model,
+      fastModel: (m.default as string) || model,
+      reasoningModel: (m.default as string) || model,
+      apiKey: '',
+    } as Profile | TargetProfile);
+  } else if (targetType === 'openclaw') {
+    let existing: Record<string, unknown> = {};
+    if (currentContent?.trim()) {
+      try { existing = JSON.parse(currentContent); } catch { existing = {}; }
+    }
+    existing.model = model;
+    content = JSON.stringify(existing, null, 2);
+  } else {
+    throw new Error(`Default model not supported for target: ${targetType}`);
+  }
+
+  await writeRawConfig(targetType, content);
+}
+
 export async function checkProfileHealth(profile: Profile): Promise<HealthStatus> {
   const targetHealths: HealthStatus[] = [];
   for (const targetType of profile.enabledTargets) {

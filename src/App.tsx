@@ -12,6 +12,7 @@ import { ClaudeCodeProfiles } from './pages/ClaudeCodeProfiles';
 import { CodexProfiles } from './pages/CodexProfiles';
 import { OpenClawProfiles } from './pages/OpenClawProfiles';
 import { OpenRouter } from './pages/OpenRouter';
+import { Updates } from './pages/Updates';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="/codex" element={<CodexProfiles />} />
             <Route path="/openclaw" element={<OpenClawProfiles />} />
             <Route path="/openrouter" element={<OpenRouter />} />
+            <Route path="/updates" element={<Updates />} />
             <Route path="/dry-run" element={<DryRun />} />
             <Route path="/backups" element={<Backups />} />
             <Route path="/settings" element={<Settings />} />

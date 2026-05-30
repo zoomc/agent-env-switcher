@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import type { TargetType } from '@/types';
 
 export function Targets() {
   const { profiles } = useApp();
+  const { t } = useTranslation();
 
   const getProfileCountForTarget = (targetType: TargetType) =>
     profiles.filter((p) => p.enabledTargets.includes(targetType)).length;
@@ -15,18 +17,16 @@ export function Targets() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Targets</h1>
-        <p className="text-muted-foreground">AI coding tools you can configure via profiles</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t('targets.title')}</h1>
+        <p className="text-muted-foreground">{t('targets.description')}</p>
       </div>
 
       {knownTargets.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <MonitorSmartphone className="mb-3 h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">No targets configured</p>
-            <p className="text-xs text-muted-foreground">
-              Targets are the AI coding tools this app can manage
-            </p>
+            <p className="text-sm text-muted-foreground">{t('targets.noTargets')}</p>
+            <p className="text-xs text-muted-foreground">{t('targets.noTargetsDesc')}</p>
           </CardContent>
         </Card>
       ) : (
@@ -48,22 +48,19 @@ export function Targets() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <FolderOpen className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-xs font-mono text-muted-foreground">
-                      {target.configPath}
-                    </span>
+                    <span className="text-xs font-mono text-muted-foreground">{target.configPath}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <Badge variant={target.isAvailable ? 'default' : 'destructive'}>
-                      {target.isAvailable ? 'Available' : 'Unavailable'}
+                      {target.isAvailable ? t('targets.available') : t('targets.unavailable')}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {getProfileCountForTarget(target.type)} profile
-                      {getProfileCountForTarget(target.type) !== 1 ? 's' : ''}
+                      {t('targets.profileCount', { count: getProfileCountForTarget(target.type) })}
                     </span>
                   </div>
                   <Button variant="outline" size="sm" className="w-full" disabled>
                     <ExternalLink className="mr-1 h-3 w-3" />
-                    Configure
+                    {t('targets.configure')}
                   </Button>
                 </div>
               </CardContent>

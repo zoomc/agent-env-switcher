@@ -1,10 +1,12 @@
+import { useTranslation } from 'react-i18next';
 import { TargetProfilesPage } from '@/components/TargetProfilesPage';
 
 export function OpenClawProfiles() {
+  const { t } = useTranslation();
   return (
     <TargetProfilesPage
       targetType="openclaw"
-      description="Open-source coding agent — manages ~/.openclaw/settings.json"
+      description={t('defaults.openclawDesc')}
     />
   );
 }

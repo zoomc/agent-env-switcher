@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { KeyInput } from '@/components/KeyInput';
 import type { ProviderType, TargetProfile } from '@/types';
@@ -22,13 +23,8 @@ const emptyForm = {
   apiKey: '',
 };
 
-export function ProfileEditor({
-  initial,
-  onSubmit,
-  onCancel,
-  submitLabel,
-  targetType,
-}: ProfileEditorProps) {
+export function ProfileEditor({ initial, onSubmit, onCancel, submitLabel }: ProfileEditorProps) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: initial?.name ?? emptyForm.name,
     providerType: initial?.providerType ?? emptyForm.providerType,
@@ -48,32 +44,27 @@ export function ProfileEditor({
     <div className="space-y-3">
       <div className="grid gap-3 md:grid-cols-2">
         <div>
-          <label className="text-xs text-muted-foreground">Profile Name</label>
+          <label className="text-xs text-muted-foreground">{t('profileEditor.profileName')}</label>
           <input
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            placeholder={`My ${targetType} profile`}
           />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground">Provider</label>
+          <label className="text-xs text-muted-foreground">{t('profileEditor.provider')}</label>
           <select
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
             value={form.providerType}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, providerType: e.target.value as ProviderType }))
-            }
+            onChange={(e) => setForm((f) => ({ ...f, providerType: e.target.value as ProviderType }))}
           >
             {VALID_PROVIDER_TYPES.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
+              <option key={p} value={p}>{p}</option>
             ))}
           </select>
         </div>
         <div className="md:col-span-2">
-          <label className="text-xs text-muted-foreground">Base URL</label>
+          <label className="text-xs text-muted-foreground">{t('profileEditor.baseUrl')}</label>
           <input
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm font-mono"
             value={form.baseUrl}
@@ -81,7 +72,7 @@ export function ProfileEditor({
           />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground">Default Model</label>
+          <label className="text-xs text-muted-foreground">{t('profileEditor.defaultModel')}</label>
           <input
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
             value={form.defaultModel}
@@ -89,7 +80,7 @@ export function ProfileEditor({
           />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground">Fast Model</label>
+          <label className="text-xs text-muted-foreground">{t('profileEditor.fastModel')}</label>
           <input
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
             value={form.fastModel}
@@ -97,7 +88,7 @@ export function ProfileEditor({
           />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground">Reasoning Model</label>
+          <label className="text-xs text-muted-foreground">{t('profileEditor.reasoningModel')}</label>
           <input
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
             value={form.reasoningModel}
@@ -108,16 +99,13 @@ export function ProfileEditor({
           <KeyInput
             value={form.apiKey}
             onChange={(val) => setForm((f) => ({ ...f, apiKey: val }))}
+            label={t('profileEditor.apiKey')}
           />
         </div>
       </div>
       <div className="flex gap-2 pt-2">
-        <Button size="sm" onClick={handleSubmit} disabled={!form.name.trim()}>
-          {submitLabel}
-        </Button>
-        <Button variant="outline" size="sm" onClick={onCancel}>
-          Cancel
-        </Button>
+        <Button size="sm" onClick={handleSubmit} disabled={!form.name.trim()}>{submitLabel}</Button>
+        <Button variant="outline" size="sm" onClick={onCancel}>{t('profileEditor.cancel')}</Button>
       </div>
     </div>
   );

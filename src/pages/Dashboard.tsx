@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,25 +29,13 @@ const healthIcons: Record<HealthStatus, React.ReactNode> = {
   unknown: <HelpCircle className="h-4 w-4 text-muted-foreground" />,
 };
 
-const healthLabels: Record<HealthStatus, string> = {
-  healthy: 'Healthy',
-  warning: 'Warning',
-  broken: 'Broken',
-  unknown: 'Unknown',
-};
-
 function getTargetIcon(targetType: TargetType): React.ReactNode {
   switch (targetType) {
-    case 'hermes':
-      return <Bot className="h-4 w-4" />;
-    case 'claude-code':
-      return <Terminal className="h-4 w-4" />;
-    case 'codex':
-      return <Box className="h-4 w-4" />;
-    case 'openclaw':
-      return <Bug className="h-4 w-4" />;
-    case 'openai-compatible-api':
-      return <Shield className="h-4 w-4" />;
+    case 'hermes': return <Bot className="h-4 w-4" />;
+    case 'claude-code': return <Terminal className="h-4 w-4" />;
+    case 'codex': return <Box className="h-4 w-4" />;
+    case 'openclaw': return <Bug className="h-4 w-4" />;
+    case 'openai-compatible-api': return <Shield className="h-4 w-4" />;
   }
 }
 
@@ -60,14 +49,15 @@ const targetRoutes: Partial<Record<TargetType, string>> = {
 export function Dashboard() {
   const { profiles, backups, switchProfile, activeProfile, loadError, targetProfiles } = useApp();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const targetTabs: TargetType[] = ['hermes', 'claude-code', 'codex', 'openclaw'];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Overview of your AI profile environment</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t('dashboard.title')}</h1>
+        <p className="text-muted-foreground">{t('dashboard.description')}</p>
       </div>
 
       {loadError && (
@@ -97,7 +87,7 @@ export function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-lg font-bold">
-                  {activeTargetProfile?.name ?? 'None'}
+                  {activeTargetProfile?.name ?? t('dashboard.none')}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {targetProfileList.length} profile{targetProfileList.length !== 1 ? 's' : ''}
@@ -113,21 +103,19 @@ export function Dashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">Active Profile: {activeProfile.name}</CardTitle>
-                <CardDescription>Active profile from unified profile list</CardDescription>
+                <CardTitle className="text-lg">{t('dashboard.activeProfile', { name: activeProfile.name })}</CardTitle>
+                <CardDescription>{t('dashboard.activeProfileDesc')}</CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 {healthIcons[activeProfile.healthStatus]}
                 <Badge
                   variant={
-                    activeProfile.healthStatus === 'healthy'
-                      ? 'default'
-                      : activeProfile.healthStatus === 'warning'
-                        ? 'secondary'
+                    activeProfile.healthStatus === 'healthy' ? 'default'
+                      : activeProfile.healthStatus === 'warning' ? 'secondary'
                         : 'destructive'
                   }
                 >
-                  {healthLabels[activeProfile.healthStatus]}
+                  {t(`health.${activeProfile.healthStatus}`)}
                 </Badge>
               </div>
             </div>
@@ -136,17 +124,17 @@ export function Dashboard() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Provider</span>
+                  <span className="text-sm text-muted-foreground">{t('dashboard.provider')}</span>
                   <span className="text-sm font-medium">{activeProfile.providerType}</span>
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Base URL</span>
+                  <span className="text-sm text-muted-foreground">{t('dashboard.baseUrl')}</span>
                   <span className="text-sm font-medium font-mono">{activeProfile.baseUrl}</span>
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">API Key</span>
+                  <span className="text-sm text-muted-foreground">{t('dashboard.apiKey')}</span>
                   <span className="text-sm font-medium font-mono">
                     {maskApiKey(activeProfile.apiKey)}
                   </span>
@@ -154,23 +142,23 @@ export function Dashboard() {
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Default Model</span>
+                  <span className="text-sm text-muted-foreground">{t('dashboard.defaultModel')}</span>
                   <span className="text-sm font-medium">{activeProfile.defaultModel}</span>
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Fast Model</span>
+                  <span className="text-sm text-muted-foreground">{t('dashboard.fastModel')}</span>
                   <span className="text-sm font-medium">{activeProfile.fastModel}</span>
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Reasoning Model</span>
+                  <span className="text-sm text-muted-foreground">{t('dashboard.reasoningModel')}</span>
                   <span className="text-sm font-medium">{activeProfile.reasoningModel}</span>
                 </div>
               </div>
             </div>
             <div className="mt-4">
-              <span className="text-sm text-muted-foreground">Enabled Targets:</span>
+              <span className="text-sm text-muted-foreground">{t('dashboard.enabledTargets')}</span>
               <div className="mt-2 flex flex-wrap gap-2">
                 {activeProfile.enabledTargets.map((target) => (
                   <Badge key={target} variant="outline">
@@ -181,7 +169,7 @@ export function Dashboard() {
             </div>
             {activeProfile.lastApplied && (
               <p className="mt-4 text-xs text-muted-foreground">
-                Last applied: {new Date(activeProfile.lastApplied).toLocaleString()}
+                {t('dashboard.lastApplied', { date: new Date(activeProfile.lastApplied).toLocaleString() })}
               </p>
             )}
           </CardContent>
@@ -191,33 +179,25 @@ export function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Backups</CardTitle>
-            <CardDescription>Configuration snapshots stored</CardDescription>
+            <CardTitle className="text-lg">{t('dashboard.backups')}</CardTitle>
+            <CardDescription>{t('dashboard.backupsDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{backups.length}</div>
-            <Button
-              variant="link"
-              className="mt-2 p-0 h-auto text-sm"
-              onClick={() => navigate('/backups')}
-            >
-              View Backups <ArrowRight className="ml-1 h-3 w-3" />
+            <Button variant="link" className="mt-2 p-0 h-auto text-sm" onClick={() => navigate('/backups')}>
+              {t('dashboard.viewBackups')} <ArrowRight className="ml-1 h-3 w-3" />
             </Button>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Unified Profiles</CardTitle>
-            <CardDescription>Profile management</CardDescription>
+            <CardTitle className="text-lg">{t('dashboard.unifiedProfiles')}</CardTitle>
+            <CardDescription>{t('dashboard.unifiedProfilesDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{profiles.length}</div>
-            <Button
-              variant="link"
-              className="mt-2 p-0 h-auto text-sm"
-              onClick={() => navigate('/profiles')}
-            >
-              Manage Profiles <ArrowRight className="ml-1 h-3 w-3" />
+            <Button variant="link" className="mt-2 p-0 h-auto text-sm" onClick={() => navigate('/profiles')}>
+              {t('dashboard.manageProfiles')} <ArrowRight className="ml-1 h-3 w-3" />
             </Button>
           </CardContent>
         </Card>
@@ -225,32 +205,25 @@ export function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Profile Health</CardTitle>
-          <CardDescription>Status of all unified profiles</CardDescription>
+          <CardTitle className="text-lg">{t('dashboard.profileHealth')}</CardTitle>
+          <CardDescription>{t('dashboard.profileHealthDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {profiles.map((profile) => (
-              <div
-                key={profile.id}
-                className="flex items-center justify-between rounded-md border border-border p-3"
-              >
+              <div key={profile.id} className="flex items-center justify-between rounded-md border border-border p-3">
                 <div className="flex items-center gap-3">
                   {healthIcons[profile.healthStatus]}
                   <span className="text-sm font-medium">{profile.name}</span>
-                  {profile.isActive && (
-                    <Badge variant="default" className="text-xs">
-                      Active
-                    </Badge>
-                  )}
+                  {profile.isActive && <Badge variant="default" className="text-xs">{t('dashboard.active')}</Badge>}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">
-                    {healthLabels[profile.healthStatus]}
+                    {t(`health.${profile.healthStatus}`)}
                   </span>
                   {!profile.isActive && (
                     <Button variant="ghost" size="sm" onClick={() => switchProfile(profile.id)}>
-                      Switch <ArrowRight className="ml-1 h-3 w-3" />
+                      {t('dashboard.switch')} <ArrowRight className="ml-1 h-3 w-3" />
                     </Button>
                   )}
                 </div>
@@ -262,10 +235,7 @@ export function Dashboard() {
 
       <div className="flex items-center gap-2 rounded-md border border-blue-500/30 bg-blue-500/10 p-3">
         <Activity className="h-4 w-4 text-blue-400" />
-        <span className="text-xs text-blue-200">
-          Per-target profiles let you manage each AI tool independently. Unified profiles remain
-          for backward compatibility.
-        </span>
+        <span className="text-xs text-blue-200">{t('dashboard.perTargetInfo')}</span>
       </div>
     </div>
   );

@@ -1,10 +1,16 @@
+import { useTranslation } from 'react-i18next';
 import { TargetProfilesPage } from '@/components/TargetProfilesPage';
+import { CodexAuthBackup } from '@/components/CodexAuthBackup';
 
 export function CodexProfiles() {
+  const { t } = useTranslation();
   return (
-    <TargetProfilesPage
-      targetType="codex"
-      description="OpenAI coding agent — manages ~/.codex/config.toml"
-    />
+    <div className="space-y-6">
+      <CodexAuthBackup />
+      <TargetProfilesPage
+        targetType="codex"
+        description={t('defaults.codexDesc')}
+      />
+    </div>
   );
 }
