@@ -26,7 +26,8 @@
       "allow": [
         { "path": "$HOME/.claude/**" },
         { "path": "$HOME/.hermes/**" },
-        { "path": "$HOME/.openclaw/**" }
+        { "path": "$HOME/.openclaw/**" },
+        { "path": "$HOME/.codex/**" }
       ]
     },
     {
@@ -34,7 +35,8 @@
       "allow": [
         { "path": "$HOME/.claude/**" },
         { "path": "$HOME/.hermes/**" },
-        { "path": "$HOME/.openclaw/**" }
+        { "path": "$HOME/.openclaw/**" },
+        { "path": "$HOME/.codex/**" }
       ]
     },
     {
@@ -42,7 +44,8 @@
       "allow": [
         { "path": "$HOME/.claude/**" },
         { "path": "$HOME/.hermes/**" },
-        { "path": "$HOME/.openclaw/**" }
+        { "path": "$HOME/.openclaw/**" },
+        { "path": "$HOME/.codex/**" }
       ]
     },
     {
@@ -50,7 +53,8 @@
       "allow": [
         { "path": "$HOME/.claude/**" },
         { "path": "$HOME/.hermes/**" },
-        { "path": "$HOME/.openclaw/**" }
+        { "path": "$HOME/.openclaw/**" },
+        { "path": "$HOME/.codex/**" }
       ]
     }
   ]

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useApp } from '@/store/AppContext';
 import { ChevronDown, ChevronUp, Save, Info, AlertTriangle } from 'lucide-react';
+import { AppUpdateSection } from '@/components/AppUpdateSection';
 
 export function Settings() {
   const { settings, updateSettings, profiles, loadError } = useApp();
@@ -145,6 +146,8 @@ export function Settings() {
           </CardContent>
         )}
       </Card>
+
+      <AppUpdateSection />
 
       <div className="flex items-center justify-end gap-3">
         {saved && <span className="text-xs text-emerald-500">{t('settings.settingsSaved')}</span>}

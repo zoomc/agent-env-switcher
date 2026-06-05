@@ -6,18 +6,14 @@
   "sidebar": {
     "targets": "Targets",
     "tools": "Tools",
-    "dashboard": "Dashboard",
     "hermes": "Hermes",
     "claudeCode": "Claude Code",
     "codex": "Codex",
     "openclaw": "OpenClaw",
     "openrouter": "OpenRouter",
-    "profiles": "Profiles",
-    "targetsInfo": "Targets Info",
-    "dryRun": "Dry Run",
     "backups": "Backups",
     "settings": "Settings",
-    "updates": "Updates"
+    "updates": "Agent Updates"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -294,5 +290,22 @@
     "success": "Default model updated",
     "failed": "Failed to update default model",
     "selectModel": "Select a model..."
+  },
+  "appUpdate": {
+    "title": "App Update",
+    "description": "Update the Agent Env Switcher application",
+    "currentVersion": "Current Version",
+    "latestVersion": "Latest Version",
+    "checkForUpdates": "Check for Updates",
+    "updateApp": "Update App",
+    "checking": "Checking...",
+    "updating": "Updating...",
+    "upToDate": "App is up to date",
+    "updateAvailable": "Update available",
+    "updateSuccess": "App updated successfully",
+    "updateFailed": "Update failed",
+    "unknown": "Unknown",
+    "neverChecked": "Never checked",
+    "updateNote": "This will pull the latest code, install dependencies, and rebuild the app."
   }
 }

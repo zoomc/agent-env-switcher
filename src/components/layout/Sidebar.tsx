@@ -2,21 +2,14 @@ import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import {
-  LayoutDashboard,
-  UserCircle,
-  Target,
-  Play,
   Archive,
   Settings,
   Zap,
-  Bot,
-  Terminal,
-  Box,
-  Bug,
   Globe,
   RefreshCw,
   type LucideIcon,
 } from 'lucide-react';
+import { SortableTargetList } from './SortableTargetList';
 
 interface NavItem {
   to: string;
@@ -24,29 +17,10 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-interface DividerItem {
-  divider: true;
-  labelKey: string;
-}
-
-type SidebarItem = NavItem | DividerItem;
-
-const navItems: SidebarItem[] = [
-  { to: '/', labelKey: 'sidebar.dashboard', icon: LayoutDashboard },
-  { divider: true, labelKey: 'sidebar.targets' },
-  { to: '/hermes', labelKey: 'sidebar.hermes', icon: Bot },
-  { to: '/claude-code', labelKey: 'sidebar.claudeCode', icon: Terminal },
-  { to: '/codex', labelKey: 'sidebar.codex', icon: Box },
-  { to: '/openclaw', labelKey: 'sidebar.openclaw', icon: Bug },
-  { divider: true, labelKey: 'sidebar.tools' },
+const toolItems: NavItem[] = [
   { to: '/openrouter', labelKey: 'sidebar.openrouter', icon: Globe },
-  { to: '/profiles', labelKey: 'sidebar.profiles', icon: UserCircle },
-  { to: '/targets', labelKey: 'sidebar.targetsInfo', icon: Target },
-  { to: '/dry-run', labelKey: 'sidebar.dryRun', icon: Play },
   { to: '/backups', labelKey: 'sidebar.backups', icon: Archive },
   { to: '/updates', labelKey: 'sidebar.updates', icon: RefreshCw },
-  { divider: true, labelKey: '' },
-  { to: '/settings', labelKey: 'sidebar.settings', icon: Settings },
 ];
 
 export function Sidebar() {
@@ -60,24 +34,26 @@ export function Sidebar() {
         <span className="text-sm font-semibold">{t('app.name')}</span>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto p-2">
-        {navItems.map((item, idx) => {
-          if ('divider' in item) {
-            return item.labelKey ? (
-              <div key={`div-${idx}`} className="pt-3 pb-1 px-3">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t(item.labelKey)}
-                </span>
-              </div>
-            ) : (
-              <div key={`div-${idx}`} className="pt-1" />
-            );
-          }
+        {/* Targets section with drag-and-drop */}
+        <div className="pt-3 pb-1 px-3">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {t('sidebar.targets')}
+          </span>
+        </div>
+        <SortableTargetList />
+
+        {/* Tools section */}
+        <div className="pt-3 pb-1 px-3">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {t('sidebar.tools')}
+          </span>
+        </div>
+        {toolItems.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === '/'}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
@@ -92,6 +68,25 @@ export function Sidebar() {
             </NavLink>
           );
         })}
+
+        {/* Spacer */}
+        <div className="pt-1" />
+
+        {/* Settings */}
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            cn(
+              'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+              isActive
+                ? 'bg-accent text-accent-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+            )
+          }
+        >
+          <Settings className="h-4 w-4" />
+          {t('sidebar.settings')}
+        </NavLink>
       </nav>
       <div className="border-t border-border p-3">
         <div className="flex items-center justify-between">

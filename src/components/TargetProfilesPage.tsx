@@ -145,7 +145,7 @@ export function TargetProfilesPage({ targetType, description }: TargetProfilesPa
         </span>
       </div>
 
-      {(targetType === 'hermes' || targetType === 'openclaw') && (
+      {(targetType === 'hermes' || targetType === 'openclaw' || targetType === 'codex') && (
         <DefaultModelSection targetType={targetType} />
       )}
 

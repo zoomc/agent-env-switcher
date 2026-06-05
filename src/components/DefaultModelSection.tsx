@@ -20,6 +20,11 @@ const knownModels: Record<string, string[]> = {
     'claude-sonnet-4', 'claude-opus-4',
     'llama-3.3-70b-instruct', 'qwen-2.5-72b-instruct',
   ],
+  codex: [
+    'gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.3-codex',
+    'o3', 'o4-mini',
+    'gpt-4o', 'gpt-4o-mini',
+  ],
 };
 
 interface DefaultModelSectionProps {
